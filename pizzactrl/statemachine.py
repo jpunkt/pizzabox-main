@@ -11,9 +11,9 @@ from enum import Enum, auto
 from pizzactrl import fs_names, sb_dummy, sb_de_alt
 from .storyboard import Activity
 
-from .hal import play_sound, take_photo, record_video, record_sound, turn_off, \
+from .hal_serial import play_sound, take_photo, record_video, record_sound, turn_off, \
                  PizzaHAL, init_camera, init_sounds, wait_for_input, \
-                 light_layer, backlight, advance, rewind
+                 light_layer, backlight, move_vert, move_hor, rewind
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ class Statemachine:
         # check scroll positions and rewind if necessary
         turn_off(self.hal)
 
-        rewind(self.hal.motor_ud, self.hal.ud_sensor)
+        #rewind(self.hal.motor_ud, self.hal.ud_sensor)
 
         if not os.path.exists(fs_names.USB_STICK):
             logger.warning('USB-Stick not found.')
@@ -129,7 +129,8 @@ class Statemachine:
         play_sound(self.hal, fs_names.SFX_POST_OK)
 
         # Callback for start when blue button is held
-        self.hal.btn_forward.when_deactivated = self._start
+        # TODO add start button
+        #self.hal.btn_forward.when_deactivated = self._start
 
         self.state = State.IDLE_START
 
@@ -190,7 +191,7 @@ class Statemachine:
                 elif act.activity is Activity.ADVANCE_UP:
                     if chapter.move and self.move:
                         logger.debug(
-                            f'advance{advance}({self.hal.motor_ud}, '
+                            f'advance({self.hal.motor_ud}, '
                             f'{self.hal.ud_sensor})')
                         advance(motor=self.hal.motor_ud,
                                 sensor=self.hal.ud_sensor)

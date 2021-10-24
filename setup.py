@@ -1,15 +1,5 @@
 import re
 import ast
-import scipy
-import wave
-
-import click
-import gpiozero
-import picamera
-import pyaudio as pyaudio
-import pydub
-import sounddevice as sounddevice
-import soundfile as soundfile
 
 from setuptools import setup
 
@@ -39,7 +29,8 @@ with open('pizzactrl/__init__.py', 'rb') as f:
             'click',
             'sounddevice',
             'soundfile',
-            'scipy'
+            'scipy',
+            'pyserial'
         ],
 
         entry_points='''

@@ -61,7 +61,7 @@ class PizzaHAL:
     def send_cmd(self, command: SerialCommands, *options):
         self.blocked = True
         opt_str = '+'.join(str(x) for x in options)
-        cmd_str = f'{command.value}:{opt_str}'
+        cmd_str = f'{command.value}:{opt_str}\n'
         self.serialcon.write(cmd_str.encode('utf-8'))
         resp = self.serialcon.readline()
         self.blocked = False
@@ -137,7 +137,7 @@ def wait_for_input(hal: PizzaHAL, go_callback: Any,
 
 
 @blocking
-def light_layer(hal: PizzaHAL, intensity: float, fade: float = 0.0, **kwargs):
+def light_layer(hal: PizzaHAL, intensity: float, fade: float = 0.0, steps: int = 100, **kwargs):
     """
     Turn on the light to illuminate the upper scroll
 
@@ -146,8 +146,10 @@ def light_layer(hal: PizzaHAL, intensity: float, fade: float = 0.0, **kwargs):
                 Default 0, time in seconds to fade in or out
     :param intensity: float
                 Intensity of the light in percent
+    :param steps: int
+                How many steps for the fade (default: 100)
     """
-    hal.send_cmd(SerialCommands.FRONTLIGHT, int(intensity * 100), int(fade * 1000))
+    hal.send_cmd(SerialCommands.FRONTLIGHT, int(intensity * 100), int(fade * 1000), steps)
 
 
 @blocking
@@ -162,9 +164,9 @@ def backlight(hal: PizzaHAL, intensity: float, fade: float = 0.0,
     :param intensity: float
                 Intensity of the light in percent
     :param steps: int
-                How many steps for the fade (default: 10)
+                How many steps for the fade (default: 100)
     """
-    hal.send_cmd(SerialCommands.BACKLIGHT, int(intensity * 100), int(fade * 1000))
+    hal.send_cmd(SerialCommands.BACKLIGHT, int(intensity * 100), int(fade * 1000), steps)
 
 @blocking
 def play_sound(hal: PizzaHAL, sound: Any, **kwargs):

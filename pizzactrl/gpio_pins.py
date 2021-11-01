@@ -1,5 +1,7 @@
 # GPIO pin definitions
 
+BTN_START = 26                      # "Start" button (begin the performance) TODO review
+
 BTN_BACK_GPIO = 14                    # "Back" button (user input)
 BTN_FORWARD_GPIO = 18                 # "Forward" button (user input)
 

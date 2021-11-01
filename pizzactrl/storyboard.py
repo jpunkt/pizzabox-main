@@ -7,7 +7,7 @@ class Activity(Enum):
     RECORD_SOUND = {'duration': 0.0, 'filename': '', 'cache': False}
     RECORD_VIDEO = {'duration': 0.0, 'filename': ''}
     TAKE_PHOTO = {'filename': ''}
-    ADVANCE_UP = {'speed': 0.3, 'direction': True}
+    ADVANCE_UP = {'speed': 0.3, 'direction': True, 'steps': 100}
     ADVANCE_LEFT = {'speed': 0.3, 'direction': True, 'steps': 180}  # TODO set right number of steps
     LIGHT_LAYER = {'intensity': 1.0, 'fade': 0.0, 'layer': True}
     LIGHT_BACK = {'intensity': 1.0, 'fade': 0.0}
@@ -40,8 +40,6 @@ class Chapter:
         if self.pos >= len(self.activities):
             raise StopIteration
         act = self.activities[self.pos]
-        if act.activity is Activity.ADVANCE_UP:   # TODO add ADVANCE_LEFT
-            self.move_ud += 1
         self.pos += 1
         return act
 
@@ -50,7 +48,6 @@ class Chapter:
 
     def rewind(self, **kwargs):
         self.move = False
-        self.move_ud = 0
         self.pos = 0
 
     def mobilize(self, **kwargs):

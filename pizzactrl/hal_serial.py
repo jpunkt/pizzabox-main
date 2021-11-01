@@ -4,7 +4,8 @@ from time import sleep
 from enum import Enum
 
 from typing import Any, List
-from scipy.io.wavfile import write as writewav
+# from scipy.io.wavfile import write as writewav
+import pydub
 
 import sounddevice as sd
 import soundfile as sf
@@ -13,7 +14,7 @@ import numpy as np
 from . import gpio_pins
 
 from picamera import PiCamera
-from gpiozero import Button, OutputDevice, PWMOutputDevice, PWMLED
+from gpiozero import Button
 
 import serial
 
@@ -52,6 +53,8 @@ class PizzaHAL:
 
     def __init__(self, serialdev: str = SERIAL_DEV, baudrate: int = SERIAL_BAUDRATE):
         self.serialcon = serial.Serial(serialdev, baudrate=baudrate, timeout=None)
+
+        self.btn_start = Button(gpio_pins.BTN_START)
 
         self.camera = None
         self.soundcache = {}
@@ -120,7 +123,8 @@ def turn_off(hal: PizzaHAL):
 
 
 def wait_for_input(hal: PizzaHAL, go_callback: Any,
-                   back_callback: Any, **kwargs):
+                   back_callback: Any, to_callback: Any,
+                   timeout=120, **kwargs):
     """
     Blink leds on buttons. Wait until the user presses a button, then execute
     the appropriate callback
@@ -128,12 +132,16 @@ def wait_for_input(hal: PizzaHAL, go_callback: Any,
     :param hal: The hardware abstraction object
     :param go_callback: called when button 'go' is pressed
     :param back_callback: called whan button 'back' is pressed
+    :param to_callback: called on timeout
+    :param timeout: inactivity timeout in seconds (default 120)
     """
-    resp = hal.send_cmd(SerialCommands.USER_INTERACTION)
+    resp = hal.send_cmd(SerialCommands.USER_INTERACTION, timeout)
     if resp == 'B':
         go_callback(**kwargs)
     elif resp == 'R':
         back_callback(**kwargs)
+    else:
+        to_callback(**kwargs)
 
 
 @blocking
@@ -200,8 +208,13 @@ def record_sound(hal: PizzaHAL, filename: Any, duration: int,
     myrecording = sd.rec(int(duration * AUDIO_REC_SR),
                          samplerate=AUDIO_REC_SR,
                          channels=2)
+    # TODO user interaction instead
     sd.wait()  # Wait until recording is finished
-    writewav(str(filename), AUDIO_REC_SR, myrecording)
+    # TODO test
+    myrecording = np.int16(myrecording)
+    song = pydub.AudioSegment(myrecording.tobytes(), frame_rate=AUDIO_REC_SR, sample_width=2, channels=2)
+    song.export(str(filename), format="mp3", bitrate="320k")
+    # ALTERNATIVE writewav(str(filename), AUDIO_REC_SR, myrecording)
     if cache:
         hal.soundcache[str(filename)] = (myrecording, AUDIO_REC_SR)
 

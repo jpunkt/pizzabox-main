@@ -30,7 +30,8 @@ with open('pizzactrl/__init__.py', 'rb') as f:
             'sounddevice',
             'soundfile',
             'scipy',
-            'pyserial'
+            'pyserial',
+            'pydub'
         ],
 
         entry_points='''

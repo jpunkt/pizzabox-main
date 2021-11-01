@@ -6,3 +6,4 @@ sounddevice
 soundfile
 scipy
 pyserial
+pydub

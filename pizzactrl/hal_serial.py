@@ -137,9 +137,9 @@ def wait_for_input(hal: PizzaHAL, go_callback: Any,
     :param timeout: inactivity timeout in seconds (default 120)
     """
     resp = hal.send_cmd(SerialCommands.USER_INTERACTION, timeout).strip()
-    if resp == 'B':
+    if resp == b'B':
         go_callback(**kwargs)
-    elif resp == 'R':
+    elif resp == b'R':
         back_callback(**kwargs)
     else:
         to_callback(**kwargs)

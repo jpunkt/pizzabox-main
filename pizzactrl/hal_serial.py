@@ -35,6 +35,7 @@ class SerialCommands(Enum):
     BACKLIGHT = 'B'
     FRONTLIGHT = 'F'
     USER_INTERACTION = 'U'
+    RECORD = 'C'
     REWIND = 'R'
 
 
@@ -135,7 +136,7 @@ def wait_for_input(hal: PizzaHAL, go_callback: Any,
     :param to_callback: called on timeout
     :param timeout: inactivity timeout in seconds (default 120)
     """
-    resp = hal.send_cmd(SerialCommands.USER_INTERACTION, timeout)
+    resp = hal.send_cmd(SerialCommands.USER_INTERACTION, timeout).strip()
     if resp == 'B':
         go_callback(**kwargs)
     elif resp == 'R':
@@ -208,8 +209,11 @@ def record_sound(hal: PizzaHAL, filename: Any, duration: int,
     myrecording = sd.rec(int(duration * AUDIO_REC_SR),
                          samplerate=AUDIO_REC_SR,
                          channels=2)
-    # TODO user interaction instead
-    sd.wait()  # Wait until recording is finished
+    resp = hal.send_cmd(SerialCommands.RECORD, duration).strip()
+    if resp == 'I':
+        sd.stop()
+    else:
+        sd.wait()  # Wait until recording is finished
     # TODO test
     myrecording = np.int16(myrecording)
     song = pydub.AudioSegment(myrecording.tobytes(), frame_rate=AUDIO_REC_SR, sample_width=2, channels=2)

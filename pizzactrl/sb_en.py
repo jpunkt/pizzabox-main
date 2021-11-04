@@ -2,43 +2,42 @@ from pizzactrl import storyboard, fs_names
 
 STORYBOARD = [
     storyboard.Chapter(
-        # storyboard.Do(storyboard.Activity.ADVANCE_UP),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,   # Bild 1
+        storyboard.Do(storyboard.Activity.LIGHT_LAYER,   # VERT01
                       intensity=1.0, fade=1.0)
     ),
     storyboard.Chapter(
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('03en')),
+                      sound=fs_names.StoryFile('01en')),
+        storyboard.Do(storyboard.Activity.PLAY_SOUND,
+                      sound=fs_names.StoryFile('02en')),
         storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 2
+        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # VERT02up
     ),
     storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,   # Bild 1
-                      intensity=1.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('04en')),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 3
+                      sound=fs_names.StoryFile('03en')),
+        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # VERT02down
+        storyboard.Do(storyboard.Activity.LIGHT_BACK,
+                      intensity=1.0, fade=0.5),
+        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+                      intensity=0.0, fade=0.5),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('05en')),
+        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # VERT03
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('06en')),
+        storyboard.Do(storyboard.Activity.LIGHT_BACK,
+                      intensity=0.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('07en')),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 4
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('08en')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('09en')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0.0),
         storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 5
+        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # VERT04
+        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+                      intensity=1.0, fade=1.0),
     ),
     storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('10en')),
+                      sound=fs_names.StoryFile('08en')),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('11en')),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,

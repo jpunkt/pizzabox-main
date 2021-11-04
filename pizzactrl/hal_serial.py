@@ -210,7 +210,7 @@ def record_sound(hal: PizzaHAL, filename: Any, duration: int,
                          samplerate=AUDIO_REC_SR,
                          channels=2)
     resp = hal.send_cmd(SerialCommands.RECORD, duration).strip()
-    if resp == 'I':
+    if resp == b'I':
         sd.stop()
     else:
         sd.wait()  # Wait until recording is finished

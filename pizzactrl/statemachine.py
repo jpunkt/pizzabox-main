@@ -207,7 +207,7 @@ class Statemachine:
         Rewind all scrolls, post-process videos
         """
         # postprocessing
-        cmdstring = f'MP4Box -add {fs_names.REC_CITY_DESC} -add{fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
+        cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
         call([cmdstring], shell=True)
 
         if self.move:

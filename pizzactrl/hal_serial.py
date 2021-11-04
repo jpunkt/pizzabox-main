@@ -268,4 +268,4 @@ def init_sounds(hal: PizzaHAL, sounds: List):
 @blocking
 def init_camera(hal: PizzaHAL):
     if hal.camera is None:
-        hal.camera = PiCamera()
+        hal.camera = PiCamera(sensor_mode=5)

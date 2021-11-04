@@ -5,11 +5,9 @@ from enum import Enum
 
 from typing import Any, List
 from scipy.io.wavfile import write as writewav
-import pydub
 
 import sounddevice as sd
 import soundfile as sf
-import numpy as np
 
 from . import gpio_pins
 

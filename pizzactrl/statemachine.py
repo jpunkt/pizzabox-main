@@ -193,8 +193,8 @@ class Statemachine:
                             Activity.TAKE_PHOTO: take_photo,
                             Activity.LIGHT_LAYER: light_layer,
                             Activity.LIGHT_BACK: backlight,
-                            Activity.ADVANCE_UP: move_vert,
-                            Activity.ADVANCE_LEFT: move_hor
+                            # Activity.ADVANCE_UP: move_vert,
+                            # Activity.ADVANCE_LEFT: move_hor
                         }[act.activity](self.hal, **act.values)
                     except KeyError:
                         logger.exception('Caught KeyError, ignoring...')

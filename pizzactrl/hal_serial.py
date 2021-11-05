@@ -212,10 +212,6 @@ def record_sound(hal: PizzaHAL, filename: Any, duration: int,
         sd.stop()
     else:
         sd.wait()  # Wait until recording is finished
-    # TODO test
-    # myrecording = np.int16(myrecording)
-    # song = pydub.AudioSegment(myrecording.tobytes(), frame_rate=AUDIO_REC_SR, sample_width=2, channels=2)
-    # song.export(str(filename), format="mp3", bitrate="44.1k")
     writewav(str(filename), AUDIO_REC_SR, myrecording)
     if cache:
         hal.soundcache[str(filename)] = (myrecording, AUDIO_REC_SR)

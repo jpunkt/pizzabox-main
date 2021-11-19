@@ -194,7 +194,7 @@ def play_sound(hal: PizzaHAL, sound: Any, **kwargs):
 
 
 @blocking
-def record_sound(hal: PizzaHAL, filename: Any, duration: int,
+def record_sound(hal: PizzaHAL, filename: Any, duration: float,
                  cache: bool = False, **kwargs):
     """
     Record sound using the microphone
@@ -207,7 +207,7 @@ def record_sound(hal: PizzaHAL, filename: Any, duration: int,
     myrecording = sd.rec(int(duration * AUDIO_REC_SR),
                          samplerate=AUDIO_REC_SR,
                          channels=2)
-    resp = hal.send_cmd(SerialCommands.RECORD, duration).strip()
+    resp = hal.send_cmd(SerialCommands.RECORD, int(duration)).strip()
     if resp == b'I':
         sd.stop()
     else:

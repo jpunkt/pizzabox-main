@@ -74,6 +74,7 @@ class Statemachine:
                 State.POST: self._post,
                 State.IDLE_START: self._idle_start,
                 State.PLAY: self._play,
+                State.REWIND: self._rewind,
                 State.IDLE_END: self._idle_end
              }
         while (self.state is not State.ERROR) and \
@@ -127,11 +128,13 @@ class Statemachine:
 
         # Callback for start when blue button is held
         self.hal.btn_start.when_activated = self._start_or_rewind
+        logger.debug('start button callback activated')
 
         # play a sound if everything is alright
         play_sound(self.hal, fs_names.SFX_POST_OK)
 
         self.state = State.IDLE_START
+        logger.debug('idle_start')
 
     def _idle_start(self):
         """
@@ -207,11 +210,15 @@ class Statemachine:
         Rewind all scrolls, post-process videos
         """
         # postprocessing
+        logger.debug('Converting video...')
         cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
         call([cmdstring], shell=True)
 
+        logger.debug('Rewinding...')
         if self.move:
             rewind(self.hal)
+        for chapter in self.story:
+            chapter.rewind()
 
         if self.loop:
             self.state = State.IDLE_START

@@ -198,6 +198,7 @@ def advance(motor: Motor, sensor: ScrollSensor, speed: float=0.3,
 @blocking
 def rewind(motor: Motor, sensor: ScrollSensor, direction: bool=True,
            max_time: float=13.2):
+    # TODO fix this
     if sensor.is_home:
         return
     sensor.eot_callback = motor.off

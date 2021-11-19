@@ -98,4 +98,4 @@ SFX_SHUTTER = SfxFile('done')
 SFX_REC_AUDIO = SfxFile('countdown')
 SFX_STOP_REC = SfxFile('done')
 
-SND_SELECT_LANG = StoryFile(name='01')
+SND_SELECT_LANG = StoryFile(name='IC-SIBI-00')

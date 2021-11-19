@@ -13,7 +13,8 @@ logger = logging.getLogger('pizzactrl.main')
 @click.option('--move', is_flag=True)
 @click.option('--test', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
-def main(move: bool=False, test: bool=False, debug: bool=False):
+@click.option('--loop', is_flag=True, default=False)
+def main(move: bool=False, test: bool=False, debug: bool=False, loop: bool=False):
     if debug or test:
         logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     else:
@@ -21,7 +22,8 @@ def main(move: bool=False, test: bool=False, debug: bool=False):
 
     sm = Statemachine(story_de=sb_de.STORYBOARD,
                       story_en=sb_en.STORYBOARD,
-                      move=move)
+                      move=move,
+                      loop=loop)
     sm.test = test
 
     exitcode = 0

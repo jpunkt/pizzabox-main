@@ -16,7 +16,7 @@ STORYBOARD = [
     storyboard.Chapter(
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-03')),
-        # storyboard.Do(storyboard.Activity.ADVANCE_UP),  # VERT02down
+        # storyboard.Do(storyboard.Activity.ADVANCE_UP, steps=90),  # VERT02down
         storyboard.Do(storyboard.Activity.LIGHT_BACK,
                       intensity=1.0, fade=0.5),
         storyboard.Do(storyboard.Activity.LIGHT_LAYER,

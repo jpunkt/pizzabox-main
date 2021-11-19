@@ -8,7 +8,7 @@ class Activity(Enum):
     RECORD_VIDEO = {'duration': 0.0, 'filename': ''}
     TAKE_PHOTO = {'filename': ''}
     ADVANCE_UP = {'speed': 0.3, 'direction': True, 'steps': 100}
-    ADVANCE_LEFT = {'speed': 0.3, 'direction': True, 'steps': 180}  # TODO set right number of steps
+    ADVANCE_LEFT = {'speed': 0.3, 'direction': True, 'steps': 200}  # TODO set right number of steps
     LIGHT_LAYER = {'intensity': 1.0, 'fade': 0.0, 'layer': True}
     LIGHT_BACK = {'intensity': 1.0, 'fade': 0.0}
 

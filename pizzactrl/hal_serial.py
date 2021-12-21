@@ -24,17 +24,27 @@ VIDEO_RES = (1920, 1080)  # Video Resolution
 PHOTO_RES = (2592, 1944)  # Photo Resolution
 AUDIO_REC_SR = 44100      # Audio Recording Samplerate
 SERIAL_DEV = '/dev/serial0'
-SERIAL_BAUDRATE = 9600
+SERIAL_BAUDRATE = 115200
 
 
 class SerialCommands(Enum):
-    MOTOR_VERT = 'V'
-    MOTOR_HOR = 'H'
-    BACKLIGHT = 'B'
-    FRONTLIGHT = 'F'
-    USER_INTERACTION = 'U'
-    RECORD = 'C'
-    REWIND = 'R'
+    HELLO = b'\x00'
+    ALREADY_CONNECTED = b'\x01'
+    ERROR = b'\x02'
+    RECEIVED = b'\x03'
+
+    MOTOR_H = b'H'
+    MOTOR_V = b'V'
+
+    BACKLIGHT = b'B'
+    FRONTLIGHT = b'F'
+
+    USER_INTERACT = b'U'
+  
+    RECORD = b'C'
+    REWIND = b'R'
+
+    EOT = b'\n'
 
 
 class PizzaHAL:
@@ -58,15 +68,16 @@ class PizzaHAL:
         self.camera = None
         self.soundcache = {}
 
-        self.blocked = False
-
     def send_cmd(self, command: SerialCommands, *options):
-        self.blocked = True
-        opt_str = '+'.join(str(x) for x in options)
-        cmd_str = f'{command.value}:{opt_str}\n'
-        self.serialcon.write(cmd_str.encode('utf-8'))
-        resp = self.serialcon.readline()
-        self.blocked = False
+        """
+        Send a command and optional options. Options need to be encoded as bytes before passing.
+        """
+        self.serialcon.write(command.value)
+        for o in options:
+            self.serialcon.write(o)
+        self.serialcon.write(SerialCommands.EOT.value)   
+        resp = self.serialcon.read_until()
+        # TODO handle errors in response
         return resp
 
 
@@ -93,7 +104,7 @@ def move_vert(hal: PizzaHAL, steps: int):
     Move the motor controlling the vertical scroll a given distance.
 
     """
-    hal.send_cmd(SerialCommands.MOTOR_VERT, steps)
+    hal.send_cmd(SerialCommands.MOTOR_V, steps.to_bytes(2, 'little', signed=True))
 
 
 def move_hor(hal: PizzaHAL, steps: int):
@@ -101,7 +112,7 @@ def move_hor(hal: PizzaHAL, steps: int):
     Move the motor controlling the horizontal scroll a given distance.
 
     """
-    hal.send_cmd(SerialCommands.MOTOR_HOR, steps)
+    hal.send_cmd(SerialCommands.MOTOR_H, steps.to_bytes(2, 'little', signed=True))
 
 
 @blocking
@@ -144,7 +155,7 @@ def wait_for_input(hal: PizzaHAL, go_callback: Any,
 
 
 @blocking
-def light_layer(hal: PizzaHAL, intensity: float, fade: float = 0.0, steps: int = 100, **kwargs):
+def light_layer(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: float = 0.0, **kwargs):
     """
     Turn on the light to illuminate the upper scroll
 
@@ -156,12 +167,16 @@ def light_layer(hal: PizzaHAL, intensity: float, fade: float = 0.0, steps: int =
     :param steps: int
                 How many steps for the fade (default: 100)
     """
-    hal.send_cmd(SerialCommands.FRONTLIGHT, int(intensity * 100), int(fade * 1000), steps)
+    hal.send_cmd(SerialCommands.FRONTLIGHT, 
+                 int(r * 255).to_bytes(1, 'little'),
+                 int(g * 255).to_bytes(1, 'little'),
+                 int(b * 255).to_bytes(1, 'little'),
+                 int(w * 255).to_bytes(1, 'little'), 
+                 int(fade * 1000).to_bytes(4, 'little'))
 
 
 @blocking
-def backlight(hal: PizzaHAL, intensity: float, fade: float = 0.0,
-              steps: int = 100, **kwargs):
+def backlight(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: float = 0.0, **kwargs):
     """
     Turn on the backlight
 
@@ -173,7 +188,12 @@ def backlight(hal: PizzaHAL, intensity: float, fade: float = 0.0,
     :param steps: int
                 How many steps for the fade (default: 100)
     """
-    hal.send_cmd(SerialCommands.BACKLIGHT, int(intensity * 100), int(fade * 1000), steps)
+    hal.send_cmd(SerialCommands.BACKLIGHT, 
+                 int(r * 255).to_bytes(1, 'little'),
+                 int(g * 255).to_bytes(1, 'little'),
+                 int(b * 255).to_bytes(1, 'little'),
+                 int(w * 255).to_bytes(1, 'little'), 
+                 int(fade * 1000).to_bytes(4, 'little'))
 
 @blocking
 def play_sound(hal: PizzaHAL, sound: Any, **kwargs):

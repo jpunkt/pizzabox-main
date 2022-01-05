@@ -23,8 +23,10 @@ logger = logging.getLogger(__name__)
 VIDEO_RES = (1920, 1080)  # Video Resolution
 PHOTO_RES = (2592, 1944)  # Photo Resolution
 AUDIO_REC_SR = 44100      # Audio Recording Samplerate
-SERIAL_DEV = '/dev/serial0'
-SERIAL_BAUDRATE = 115200
+
+SERIAL_DEV = '/dev/serial0' # Serial port to use
+SERIAL_BAUDRATE = 115200    # Serial connection baud rate
+SERIAL_CONN_TIMEOUT = 60    # Serial connection read timeout
 
 
 class SerialCommands(Enum):
@@ -40,11 +42,20 @@ class SerialCommands(Enum):
     FRONTLIGHT = b'F'
 
     USER_INTERACT = b'U'
+
+    RESP_BLUE = b'X'
+    RESP_RED = b'O'
+    RESP_YELLOW = b'Y'
+    RESP_GREEN = b'N'
   
     RECORD = b'C'
     REWIND = b'R'
 
     EOT = b'\n'
+
+
+class SerialCommunicationError(Exception):
+    pass
 
 
 class PizzaHAL:
@@ -60,18 +71,44 @@ class PizzaHAL:
 
     """
 
-    def __init__(self, serialdev: str = SERIAL_DEV, baudrate: int = SERIAL_BAUDRATE):
-        self.serialcon = serial.Serial(serialdev, baudrate=baudrate, timeout=None)
+    def __init__(self, serialdev: str = SERIAL_DEV, baudrate: int = SERIAL_BAUDRATE, timeout: float = SERIAL_CONN_TIMEOUT):
+        self.serialcon = serial.Serial(serialdev, baudrate=baudrate, timeout=timeout)
 
         self.btn_start = Button(gpio_pins.BTN_START)
 
         self.camera = None
         self.soundcache = {}
 
-    def send_cmd(self, command: SerialCommands, *options):
+        self.connected = False
+
+    def init_connection(self):
+        self.serialcon.write(SerialCommands.HELLO.value + SerialCommands.EOT.value)
+        resp = self.serialcon.read_until()
+        if resp == (SerialCommands.HELLO.value + SerialCommands.EOT.value):
+            self.serialcon.write(SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value)
+        elif resp == (SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value):
+            logger.warn('Serial Connection received ALREADY CONNECTED as response to HELLO. Assuming connection ok.')
+            self.connected = True
+            return
+        elif resp == b'':
+            raise SerialCommunicationError('Timeout on initializing connection.')
+        else:
+            raise SerialCommunicationError(f'Serial Connection received invalid response to HELLO: {resp}')
+        resp = self.serialcon.read_until()
+        if resp == (SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value):
+            self.connected == True
+            logger.info('Serial Connection established')
+        elif resp == b'':
+            raise SerialCommunicationError('Timeout on initializing connection.')
+        else:
+            raise SerialCommunicationError(f'Serial Connection received invalid response to ALREADY CONNECTED: {resp}')
+
+    def send_cmd(self, command: SerialCommands, *options: bytes):
         """
         Send a command and optional options. Options need to be encoded as bytes before passing.
         """
+        if not self.connected:
+            raise SerialCommunicationError("Serial Communication not initialized. Call `init_connection()` before `send_cmd()`.")
         self.serialcon.write(command.value)
         for o in options:
             self.serialcon.write(o)
@@ -81,24 +118,6 @@ class PizzaHAL:
         return resp
 
 
-def blocking(func):
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        hal = kwargs.get('hal', None)
-        if hal is not None:
-            logger.debug('blocking...')
-            while hal.blocked:
-                pass
-            hal.blocked = True
-        func(*args, **kwargs)
-        if hal is not None:
-            logger.debug('unblocking')
-            hal.blocked = False
-        sleep(0.1)
-    return _wrapper
-
-
-@blocking
 def move_vert(hal: PizzaHAL, steps: int):
     """
     Move the motor controlling the vertical scroll a given distance.
@@ -115,7 +134,6 @@ def move_hor(hal: PizzaHAL, steps: int):
     hal.send_cmd(SerialCommands.MOTOR_H, steps.to_bytes(2, 'little', signed=True))
 
 
-@blocking
 def rewind(hal: PizzaHAL):
     """
     Rewind both scrolls.
@@ -154,7 +172,6 @@ def wait_for_input(hal: PizzaHAL, go_callback: Any,
         to_callback(**kwargs)
 
 
-@blocking
 def light_layer(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: float = 0.0, **kwargs):
     """
     Turn on the light to illuminate the upper scroll
@@ -175,7 +192,6 @@ def light_layer(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: flo
                  int(fade * 1000).to_bytes(4, 'little'))
 
 
-@blocking
 def backlight(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: float = 0.0, **kwargs):
     """
     Turn on the backlight
@@ -195,7 +211,7 @@ def backlight(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: float
                  int(w * 255).to_bytes(1, 'little'), 
                  int(fade * 1000).to_bytes(4, 'little'))
 
-@blocking
+
 def play_sound(hal: PizzaHAL, sound: Any, **kwargs):
     """
     Play a sound.
@@ -213,7 +229,6 @@ def play_sound(hal: PizzaHAL, sound: Any, **kwargs):
         # sd.stop()
 
 
-@blocking
 def record_sound(hal: PizzaHAL, filename: Any, duration: float,
                  cache: bool = False, **kwargs):
     """
@@ -237,7 +252,6 @@ def record_sound(hal: PizzaHAL, filename: Any, duration: float,
         hal.soundcache[str(filename)] = (myrecording, AUDIO_REC_SR)
 
 
-@blocking
 def record_video(hal: PizzaHAL, filename: Any, duration: float, **kwargs):
     """
     Record video using the camera
@@ -252,7 +266,6 @@ def record_video(hal: PizzaHAL, filename: Any, duration: float, **kwargs):
     hal.camera.stop_recording()
 
 
-@blocking
 def take_photo(hal: PizzaHAL, filename: Any, **kwargs):
     """
     Take a foto with the camera
@@ -264,7 +277,6 @@ def take_photo(hal: PizzaHAL, filename: Any, **kwargs):
     hal.camera.capture(str(filename))
 
 
-@blocking
 def init_sounds(hal: PizzaHAL, sounds: List):
     """
     Load prerecorded Sounds into memory
@@ -281,7 +293,6 @@ def init_sounds(hal: PizzaHAL, sounds: List):
         hal.soundcache[str(sound)] = (data, fs)
 
 
-@blocking
 def init_camera(hal: PizzaHAL):
     if hal.camera is None:
         hal.camera = PiCamera(sensor_mode=5)

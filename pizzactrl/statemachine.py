@@ -10,7 +10,7 @@ from subprocess import call
 
 from pizzactrl import fs_names, sb_dummy
 from .storyboard import Activity
-from .hal_serial import play_sound, take_photo, record_video, record_sound, turn_off, \
+from .hal_serial import SerialCommunicationError, play_sound, take_photo, record_video, record_sound, turn_off, \
                  PizzaHAL, init_camera, init_sounds, wait_for_input, \
                  light_layer, backlight, move_vert, move_hor, rewind
 
@@ -109,6 +109,12 @@ class Statemachine:
         logger.debug(f'power on')
         # self.hal.lid_sensor.when_pressed = self._lid_open
         # self.hal.lid_sensor.when_released = self._lid_closed
+        try:
+            self.hal.init_connection()
+        except SerialCommunicationError as e:
+            self.state = State.ERROR
+            logger.exception(e)
+            return 
         init_sounds(self.hal, load_sounds())
         init_camera(self.hal)
         self.state = State.POST

@@ -51,6 +51,9 @@ class SerialCommands(Enum):
     RECORD = b'C'
     REWIND = b'R'
 
+    DEBUG_SCROLL = b'S'
+    DEBUG_SENSORS = b'Z'
+
     EOT = b'\n'
 
 
@@ -86,24 +89,22 @@ class PizzaHAL:
         resp = self.serialcon.read_until()
         if resp == (SerialCommands.HELLO.value + SerialCommands.EOT.value):
             self.serialcon.write(SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value)
+            resp = self.serialcon.read_until()
+            if resp == (SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value):
+                logger.info('Serial Connection established')
+            elif resp == b'':
+                raise SerialCommunicationError('Timeout on initializing connection.')
+            else:
+                raise SerialCommunicationError(f'Serial Connection received invalid response to ALREADY CONNECTED: {resp}')
         elif resp == (SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value):
             logger.warn('Serial Connection received ALREADY CONNECTED as response to HELLO. Assuming connection ok.')
-            self.connected = True
-            return
         elif resp == b'':
             raise SerialCommunicationError('Timeout on initializing connection.')
         else:
             raise SerialCommunicationError(f'Serial Connection received invalid response to HELLO: {resp}')
-        resp = self.serialcon.read_until()
-        if resp == (SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value):
-            self.connected == True
-            logger.info('Serial Connection established')
-        elif resp == b'':
-            raise SerialCommunicationError('Timeout on initializing connection.')
-        else:
-            raise SerialCommunicationError(f'Serial Connection received invalid response to ALREADY CONNECTED: {resp}')
+        self.connected = True
 
-    def send_cmd(self, command: SerialCommands, *options: bytes):
+    def send_cmd(self, command: SerialCommands, *options):
         """
         Send a command and optional options. Options need to be encoded as bytes before passing.
         """

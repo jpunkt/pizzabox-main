@@ -9,10 +9,11 @@ from enum import Enum, auto
 from subprocess import call
 
 from pizzactrl import fs_names, sb_dummy
-from .storyboard import Activity
-from .hal_serial import SerialCommunicationError, play_sound, take_photo, record_video, record_sound, turn_off, \
-                 PizzaHAL, init_camera, init_sounds, wait_for_input, \
-                 light_layer, backlight, move_vert, move_hor, rewind
+from pizzactrl.hal import ScrollSensor
+from .storyboard import Activity, Select, Option
+from .hal_serial import SerialCommunicationError, PizzaHAL, play_sound, take_photo, record_video, record_sound, turn_off, wait_for_input, \
+                 light, move, rewind
+from pizzactrl import storyboard
 
 logger = logging.getLogger(__name__)
 
@@ -50,25 +51,47 @@ def load_sounds():
     return soundcache
 
 
+# Map Activities to function calls
+ACTIVITY_SELECTOR = {
+                        Activity.PLAY_SOUND: play_sound,
+                        Activity.RECORD_SOUND: record_sound,
+                        Activity.RECORD_VIDEO: record_video,
+                        Activity.TAKE_PHOTO: take_photo,
+                        Activity.LIGHT_LAYER: light,
+                        Activity.LIGHT_BACK: light,
+                        Activity.ADVANCE_UP: move,
+                        Activity.ADVANCE_LEFT: move
+                    }
+
+
 class Statemachine:
     def __init__(self,
                  story_de: Any=None,
                  story_en: Any=None,
                  move: bool = False,
-                 loop: bool = True):
+                 loop: bool = True,
+                 test: bool = False):
         self.state = State.POWER_ON
         self.hal = PizzaHAL()
+
+        self.chapter = 0
+        self.next_chapter = 0
+
         self.story = None
         self.story_de = story_de
         self.story_en = story_en
-        self.alt = False
+        
         self.lang = Language.NOT_SET
-        self.move = move
-        self.test = False
+        
+        self.MOVE = move          # self.move is reset to this value
+        self.move = self.MOVE
+        
+        self.test = test
         self.loop = loop
 
     def run(self):
         logger.debug(f'Run(state={self.state})')
+
         choice = {
                 State.POWER_ON: self._power_on,
                 State.POST: self._post,
@@ -77,6 +100,7 @@ class Statemachine:
                 State.REWIND: self._rewind,
                 State.IDLE_END: self._idle_end
              }
+            
         while (self.state is not State.ERROR) and \
                 (self.state is not State.SHUTDOWN):
             choice[self.state]()
@@ -107,40 +131,51 @@ class Statemachine:
         Initialize hal callbacks, load sounds
         """
         logger.debug(f'power on')
+        
+        # TODO enable lid sensor
         # self.hal.lid_sensor.when_pressed = self._lid_open
         # self.hal.lid_sensor.when_released = self._lid_closed
-        try:
-            self.hal.init_connection()
-        except SerialCommunicationError as e:
-            self.state = State.ERROR
-            logger.exception(e)
-            return 
-        init_sounds(self.hal, load_sounds())
-        init_camera(self.hal)
+        
+        self.hal.init_sounds(load_sounds())
+        self.hal.init_camera()
+
         self.state = State.POST
 
     def _post(self):
         """
         Power on self test.
         """
-        logger.debug(f'post')
-        # check scroll positions and rewind if necessary
-        turn_off(self.hal)
 
-        if not os.path.exists(fs_names.USB_STICK):
+        logger.debug(f'post')
+
+        if (not self.test) and (not os.path.exists(fs_names.USB_STICK)):
             logger.warning('USB-Stick not found.')
             self.state = State.ERROR
             return
 
+        # TODO set RPi_HELO pins, wait for response
+
         # Callback for start when blue button is held
-        self.hal.btn_start.when_activated = self._start_or_rewind
-        logger.debug('start button callback activated')
+        # self.hal.btn_start.when_activated = self._start_or_rewind
+        # logger.debug('start button callback activated')
+
+        try:
+            self.hal.init_connection()
+        except SerialCommunicationError as e:
+            self.state = State.ERROR
+            logger.exception(e)
+            return
 
         # play a sound if everything is alright
         play_sound(self.hal, fs_names.SFX_POST_OK)
 
-        self.state = State.IDLE_START
-        logger.debug('idle_start')
+        if self.test:
+            self.state = State.PLAY
+            logger.debug('play')
+        else:
+            self.state = State.IDLE_START
+            logger.debug('idle_start')
+        
 
     def _idle_start(self):
         """
@@ -148,24 +183,9 @@ class Statemachine:
         """
         pass
 
-    def _start_or_rewind(self):
-        """
-        Callback function.
-
-        If statemachine is in idle state, start playback when start
-        button is pressed (released).
-
-        If statemachine is playing, trigger rewind and start fresh
-        """
-        if self.state == State.IDLE_START:
-            self.state = State.PLAY
-            return
-        if self.state == State.PLAY:
-            self.state = State.REWIND
-
     def _play(self):
         """
-        Run the storyboard
+        Select language, then run the storyboard
         """
         logger.debug(f'play')
         if self.test:
@@ -174,48 +194,134 @@ class Statemachine:
             # TODO reenable language selection
             self.story = self.story_en
 
-        for chapter in iter(self.story):
-            logger.debug(f'playing chapter {chapter}')
+        while self.chapter is not None:
+            self._play_chapter()
+            self._advance_chapter()
+            
+        self.state = State.REWIND
+
+    def _option_callback(self, selection: Select):
+        """
+        Return a callback for the appropriate option and parameters.
+        Callbacks set the properties of `Statemachine` to determine it's behaviour.
+        """
+        rewind = selection.values.get('rewind', Option.REPEAT.value['rewind'])
+        next_chapter = selection.values.get('chapter', Option.GOTO.value['chapter'])
+        shutdown = selection.values.get('shutdown', Option.QUIT.value['shutdown'])
+        
+        def _continue(**kwargs):
+            """
+            Continue in the Storyboard. Prepare advancing to the next chapter.
+            """
+            self.move = self.MOVE
+            if len(self.story) > (self.chapter + 1):
+                self.next_chapter = self.chapter + 1
+            else:
+                self.next_chapter = None
+
+        def _repeat(**kwargs):
+            """
+            Repeat the current chapter. Do not rewind if the selection says so.
+            """
+            self.move = rewind
+            self.next_chapter = self.chapter
+        
+        def _goto(**kwargs):
+            """
+            Jump to a specified chapter.
+            """
+            self.move = self.MOVE
+            self.next_chapter = next_chapter
+
+        def _quit(**kwargs):
+            self.move = self.MOVE
+            self.loop = not shutdown
+            self.next_chapter = None
+
+        return {
+                   Option.CONTINUE: _continue,
+                   Option.REPEAT: _repeat,
+                   Option.GOTO: _goto,
+                   Option.QUIT: _quit,
+                   None: None
+               }[selection.option]
+
+    def _play_chapter(self):
+        """
+        Play the chapter specified by self.chapter
+        """
+        logger.debug(f'playing chapter {self.chapter}')
+
+        if self.chapter < len(self.story):
+            chapter = self.story[self.chapter]
+
             while chapter.hasnext():
                 act = next(chapter)
                 logger.debug(f'next activity {act.activity}')
                 if act.activity is Activity.WAIT_FOR_INPUT:
                     wait_for_input(hal=self.hal,
-                                   go_callback=chapter.mobilize,
-                                   back_callback=chapter.rewind,
-                                   to_callback=self._start_or_rewind)
-                # elif act.activity is Activity.ADVANCE_UP:
-                #     if chapter.move and self.move:
-                #         logger.debug(
-                #             f'advance({self.hal.motor_ud}, '
-                #             f'{self.hal.ud_sensor})')
-                #         advance(motor=self.hal.motor_ud,
-                #                 sensor=self.hal.ud_sensor)
-                #     elif not self.move:
-                #         play_sound(self.hal, fs_names.StoryFile('stop'))
+                                blue_cb = self._option_callback(act.values['on_blue']),
+                                red_cb = self._option_callback(act.values['on_red']),
+                                yellow_cb = self._option_callback(act.values['on_yellow']),
+                                green_cb = self._option_callback(act.values['on_green']),
+                                timeout_cb = self._option_callback(act.values['on_timeout']),
+                                **act.values)
                 else:
                     try:
-                        {
-                            Activity.PLAY_SOUND: play_sound,
-                            Activity.RECORD_SOUND: record_sound,
-                            Activity.RECORD_VIDEO: record_video,
-                            Activity.TAKE_PHOTO: take_photo,
-                            Activity.LIGHT_LAYER: light_layer,
-                            Activity.LIGHT_BACK: backlight,
-                            # Activity.ADVANCE_UP: move_vert,
-                            # Activity.ADVANCE_LEFT: move_hor
-                        }[act.activity](self.hal, **act.values)
+                        ACTIVITY_SELECTOR[act.activity](self.hal, **act.values)
                     except KeyError:
                         logger.exception('Caught KeyError, ignoring...')
                         pass
+            
+            self.next_chapter = self.chapter + 1
+        else:
+            self.next_chapter = None
+    
+    def _advance_chapter(self):
+        """
+        Update chapters and move the scrolls.
+        Update self.chapter to self.next_chapter
+        """
+        if self.next_chapter is not None:
+            diff = self.next_chapter - self.chapter
+            h_steps = 0
+            v_steps = 0
+            if diff < 0:
+                """
+                Rewind all chapters up to target
+                """
+                for ch in self.story[self.next_chapter:self.chapter]:
+                    steps = ch.rewind()
+                    h_steps += steps['h_steps']
+                    v_steps += steps['v_steps']
 
-        self.state = State.REWIND
+            elif diff > 0:
+                """
+                Skip all chapters up to target
+                """
+                for ch in self.story[self.chapter:self.next_chapter]:
+                    steps = ch.skip()
+                    h_steps += steps['h_steps']
+                    v_steps += steps['v_steps']
+            else:
+                """
+                Rewind current chapter
+                """
+                steps = self.story[self.chapter].rewind()
+                h_steps = steps['h_steps']
+                v_steps = steps['v_steps']
+
+            if self.move:
+                move(self.hal, h_steps, True)
+                move(self.hal, v_steps, False)
+
+        self.chapter = self.next_chapter
 
     def _rewind(self):
         """
         Rewind all scrolls, post-process videos
         """
-        # postprocessing
+        # TODO postprocessing - add sound
         logger.debug('Converting video...')
         cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
         call([cmdstring], shell=True)
@@ -223,6 +329,7 @@ class Statemachine:
         logger.debug('Rewinding...')
         if self.move:
             rewind(self.hal)
+        
         for chapter in self.story:
             chapter.rewind()
 

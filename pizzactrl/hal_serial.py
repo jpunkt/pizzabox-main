@@ -120,7 +120,7 @@ class PizzaHAL:
                 # Extract data and sampling rate from file
                 # data, fs = sf.read(str(sound), dtype='float32')
                 # self.soundcache[str(sound)] = (data, fs)
-                self.soundcache[str(sound)] = mx.Sound(sound)
+                self.soundcache[str(sound)] = mx.Sound(str(sound))
 
     def init_camera(self):
         if self.camera is None:
@@ -157,23 +157,19 @@ class PizzaHAL:
         return resp
 
 
-def move_vert(hal: PizzaHAL, steps: int):
+def move(hal: PizzaHAL, 
+         steps: int,
+         horizontal: bool,
+         **kwargs):
     """
     Move the motor controlling the vertical scroll a given distance.
 
     """
-    hal.send_cmd(SerialCommands.MOTOR_V, steps.to_bytes(2, 'little', signed=True))
+    hal.send_cmd(SerialCommands.MOTOR_H if horizontal else SerialCommands.MOTOR_V, 
+                 steps.to_bytes(2, 'little', signed=True))
 
 
-def move_hor(hal: PizzaHAL, steps: int):
-    """
-    Move the motor controlling the horizontal scroll a given distance.
-
-    """
-    hal.send_cmd(SerialCommands.MOTOR_H, steps.to_bytes(2, 'little', signed=True))
-
-
-def rewind(hal: PizzaHAL):
+def rewind(hal: PizzaHAL, **kwargs):
     """
     Rewind both scrolls.
 
@@ -181,9 +177,9 @@ def rewind(hal: PizzaHAL):
     hal.send_cmd(SerialCommands.REWIND)
 
 
-def turn_off(hal: PizzaHAL):
+def turn_off(hal: PizzaHAL, **kwargs):
     """
-    Turn off everything.
+    Turn off the lights.
     """
     hal.send_cmd(SerialCommands.BACKLIGHT, 0)
     hal.send_cmd(SerialCommands.FRONTLIGHT, 0)
@@ -223,7 +219,7 @@ def wait_for_input(hal: PizzaHAL,
               (8 if green_cb else 0)
 
     if sound is not None:
-        hal.play_sound(sound)
+        hal.play_sound(str(sound))
 
     resp = hal.send_cmd(SerialCommands.USER_INTERACT, bitmask.to_bytes(1, 'little', signed=False), timeout.to_bytes(4, 'little', signed=False))
 
@@ -246,7 +242,14 @@ def wait_for_input(hal: PizzaHAL,
         timeout_cb(**kwargs)
 
 
-def light_layer(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: float = 0.0, **kwargs):
+def light(hal: PizzaHAL,
+          r: float, 
+          g: float, 
+          b: float, 
+          w: float, 
+          fade: float = 0.0, 
+          backlight: bool = False,
+          **kwargs):
     """
     Turn on the light to illuminate the upper scroll
 
@@ -258,30 +261,10 @@ def light_layer(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: flo
     :param steps: int
                 How many steps for the fade (default: 100)
     """
-    hal.send_cmd(SerialCommands.FRONTLIGHT, 
-                 int(r * 255).to_bytes(1, 'little'),
-                 int(g * 255).to_bytes(1, 'little'),
+    hal.send_cmd(SerialCommands.BACKLIGHT if backlight else SerialCommands.FRONTLIGHT, 
                  int(b * 255).to_bytes(1, 'little'),
-                 int(w * 255).to_bytes(1, 'little'), 
-                 int(fade * 1000).to_bytes(4, 'little'))
-
-
-def backlight(hal: PizzaHAL, r: float, g: float, b: float, w: float, fade: float = 0.0, **kwargs):
-    """
-    Turn on the backlight
-
-    :param hal: The hardware abstraction object
-    :param fade: float
-                Default 0, time in seconds to fade in or out
-    :param intensity: float
-                Intensity of the light in percent
-    :param steps: int
-                How many steps for the fade (default: 100)
-    """
-    hal.send_cmd(SerialCommands.BACKLIGHT, 
-                 int(r * 255).to_bytes(1, 'little'),
                  int(g * 255).to_bytes(1, 'little'),
-                 int(b * 255).to_bytes(1, 'little'),
+                 int(r * 255).to_bytes(1, 'little'),
                  int(w * 255).to_bytes(1, 'little'), 
                  int(fade * 1000).to_bytes(4, 'little'))
 
@@ -295,7 +278,7 @@ def play_sound(hal: PizzaHAL, sound: Any, **kwargs):
     """
     # Extract data and sampling rate from file
     try:
-        hal.play_sound(sound)
+        hal.play_sound(str(sound))
         while mx.get_busy():
             pass
     except KeyboardInterrupt:

@@ -1,248 +1,42 @@
-from pizzactrl import storyboard, fs_names
+from pizzactrl import fs_names
+from pizzactrl.storyboard import *
 
 STORYBOARD = [
-    storyboard.Chapter(
-        # storyboard.Do(storyboard.Activity.ADVANCE_UP),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,   # Bild 1
-                      intensity=1.0, fade=1.0)
+    Chapter(
+        Do(Activity.ADVANCE_UP,
+           steps=50),
+        Do(Activity.LIGHT_BACK,   # Bild 1
+           intensity=1.0, fade=1.0),
+        Do(Activity.WAIT_FOR_INPUT,
+           on_blue=Select(Option.CONTINUE),
+           on_red=Select(Option.REPEAT))
     ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 2
+    Chapter(
+        Do(Activity.ADVANCE_LEFT,
+           steps=100),
+        Do(Activity.ADVANCE_UP,
+           steps=50),
+        Do(Activity.WAIT_FOR_INPUT,
+           on_blue=Select(Option.CONTINUE),
+           on_red=Select(Option.REPEAT),
+           on_yellow=Select(Option.GOTO, chapter=0),
+           on_green=Select(Option.QUIT))
     ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 3
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 4
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0.0),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 5
+    Chapter(
+        Do(Activity.ADVANCE_LEFT,
+           steps=-50),
+        Do(Activity.ADVANCE_UP,
+           steps=-20)
     ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_REC_AUDIO),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_REC_AUDIO),
-        storyboard.Do(storyboard.Activity.RECORD_SOUND,
-                      filename=fs_names.REC_NAME,
-                      duration=7.0,
-                      cache=True),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_STOP_REC),
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.REC_NAME),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 6
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_REC_AUDIO),
-        storyboard.Do(storyboard.Activity.RECORD_SOUND,
-                      filename=fs_names.REC_CITY_DESC,
-                      duration=60.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_STOP_REC),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 7
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0.0),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.TAKE_PHOTO,
-                      filename=fs_names.REC_PORTRAIT),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_SHUTTER)
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=2.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 9
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
-                      intensity=1., fade=0.5),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1., fade=0.5),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
-                      intensity=0., fade=1.),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 10
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 11
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 12
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1., fade=.5),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 13
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=1.),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_REC_AUDIO),
-        storyboard.Do(storyboard.Activity.RECORD_SOUND,
-                      filename=fs_names.REC_CITY_NAME,
-                      duration=7.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_STOP_REC),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 14
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_REC_AUDIO),
-        storyboard.Do(storyboard.Activity.RECORD_SOUND,
-                      filename=fs_names.REC_CITY_DESC,
-                      duration=60.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_STOP_REC),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 15
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_REC_AUDIO),
-        storyboard.Do(storyboard.Activity.RECORD_SOUND,
-                      filename=fs_names.REC_CITY_DESC,
-                      duration=60.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_STOP_REC),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=1.),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)  # Bild 16
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)  # Bild 17
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=1.),
-        storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_REC_AUDIO),
-        storyboard.Do(storyboard.Activity.RECORD_VIDEO,
-                      filename=fs_names.REC_DRAW_CITY,
-                      duration=60.0),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.SFX_STOP_REC),
-
-        storyboard.Do(storyboard.Activity.ADVANCE_UP)  # Bild 18
-    ),
-    storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=1., fade=1.),
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.ADVANCE_UP),  # Bild 19
-        storyboard.Do(storyboard.Activity.PLAY_SOUND,
-                      sound=fs_names.StoryFile('01dummy')),
-        storyboard.Do(storyboard.Activity.LIGHT_BACK,
-                      intensity=0., fade=2.)
+    Chapter(
+        Do(Activity.ADVANCE_LEFT,
+           steps=100),
+        Do(Activity.ADVANCE_UP,
+           steps=50),
+        Do(Activity.WAIT_FOR_INPUT,
+           on_blue=Select(Option.CONTINUE),
+           on_red=Select(Option.REPEAT),
+           on_yellow=Select(Option.GOTO, chapter=0),
+           on_green=Select(Option.QUIT))
     )
 ]

@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from typing import List
 
 from pizzactrl.hal_serial import SerialCommands
 
@@ -72,6 +73,22 @@ class Do:
         self.values = {}
         for key, value in self.activity.value.items():
             self.values[key] = kwargs.get(key, value)
+
+    def execute():
+        # TODO implement
+        pass
+
+
+class Do_Parallel:
+    """
+    A list of activities which should be done at the same time
+    """
+    def __init__(self, *activities: List[Do]) -> None:
+        self.act_list = activities
+
+    def execute():
+        for act in self.act_list:
+            act.execute()
 
 
 class Chapter:

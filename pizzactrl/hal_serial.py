@@ -32,21 +32,30 @@ SERIAL_BAUDRATE = 115200    # Serial connection baud rate
 SERIAL_CONN_TIMEOUT = 60    # Serial connection read timeout
 
 
+class Lights(Enum):
+    BACKLIGHT = 0
+    FRONTLIGHT = 1
+
+
+class Scrolls(Enum):
+    HORIZONTAL = 0
+    VERTICAL = 1
+
+
 class SerialCommands(Enum):
     HELLO = b'\x00'
     ALREADY_CONNECTED = b'\x01'
     ERROR = b'\x02'
     RECEIVED = b'\x03'
 
-    MOTOR_H = b'H'
-    MOTOR_V = b'V'
+    SET_MOVEMENT = b'M'
+    SET_LIGHT = b'L'
 
-    BACKLIGHT = b'B'
-    FRONTLIGHT = b'F'
+    DO_IT = b'D'
 
     USER_INTERACT = b'U'
-  
     RECORD = b'C'
+
     REWIND = b'R'
 
     DEBUG_SCROLL = b'S'
@@ -157,15 +166,17 @@ class PizzaHAL:
         return resp
 
 
-def move(hal: PizzaHAL, 
+def set_movement(hal: PizzaHAL, 
+         scroll: Scrolls,
          steps: int,
-         horizontal: bool,
          **kwargs):
     """
     Move the motor controlling the vertical scroll a given distance.
 
     """
-    hal.send_cmd(SerialCommands.MOTOR_H if horizontal else SerialCommands.MOTOR_V, 
+    scroll = int(scroll.value)
+    hal.send_cmd(SerialCommands.SET_MOVEMENT,
+                 scroll.to_bytes(1, 'little', signed=False),
                  steps.to_bytes(2, 'little', signed=True))
 
 
@@ -181,7 +192,10 @@ def turn_off(hal: PizzaHAL, **kwargs):
     """
     Turn off the lights.
     """
-    light(hal, [SerialCommands.BACKLIGHT, SerialCommands.FRONTLIGHT], 0, 0, 0, 0, 0)
+
+    set_light(hal, Lights.BACKLIGHT, 0, 0, 0, 0, 0)
+    set_light(hal, Lights.FRONTLIGHT, 0, 0, 0, 0, 0)
+    do_it(hal)
 
 
 def wait_for_input(hal: PizzaHAL,
@@ -241,8 +255,8 @@ def wait_for_input(hal: PizzaHAL,
         timeout_cb(**kwargs)
 
 
-def light(hal: PizzaHAL,
-          light: Iterable,
+def set_light(hal: PizzaHAL,
+          light: Lights,
           r: float, 
           g: float, 
           b: float, 
@@ -255,19 +269,21 @@ def light(hal: PizzaHAL,
     :param hal: The hardware abstraction object
     :param fade: float
                 Default 0, time in seconds to fade in or out
-    :param intensity: float
-                Intensity of the light in percent
-    :param steps: int
-                How many steps for the fade (default: 100)
     """
-    # TODO send light as bitmask
-    for l in iter(light):
-        hal.send_cmd(l, 
-                    int(b * 255).to_bytes(1, 'little'),
-                    int(g * 255).to_bytes(1, 'little'),
-                    int(r * 255).to_bytes(1, 'little'),
-                    int(w * 255).to_bytes(1, 'little'), 
-                    int(fade * 1000).to_bytes(4, 'little'))
+    # convert color to 32bit number
+    color = (int(w * 255) << 24) | (int(b * 255) << 16) | (int(g * 255) << 8) | (int(r * 255))
+
+    hal.send_cmd(SerialCommands.SET_LIGHT,
+                 int(light.value).to_bytes(1, 'little'), 
+                 int(color).to_bytes(4, 'little'), 
+                 int(fade * 1000).to_bytes(4, 'little'))
+
+
+def do_it(hal: PizzaHAL):
+    """
+    Execute set commands
+    """
+    hal.send_cmd(SerialCommands.DO_IT)
 
 
 def play_sound(hal: PizzaHAL, sound: Any, **kwargs):

@@ -12,7 +12,7 @@ from pizzactrl import fs_names, sb_dummy
 from pizzactrl.hal import ScrollSensor
 from .storyboard import Activity, Select, Option
 from .hal_serial import SerialCommunicationError, PizzaHAL, play_sound, take_photo, record_video, record_sound, turn_off, wait_for_input, \
-                 light, move, rewind
+                 set_light, set_movement, rewind
 from pizzactrl import storyboard
 
 logger = logging.getLogger(__name__)
@@ -57,10 +57,10 @@ ACTIVITY_SELECTOR = {
                         Activity.RECORD_SOUND: record_sound,
                         Activity.RECORD_VIDEO: record_video,
                         Activity.TAKE_PHOTO: take_photo,
-                        Activity.LIGHT_LAYER: light,
-                        Activity.LIGHT_BACK: light,
-                        Activity.ADVANCE_UP: move,
-                        Activity.ADVANCE_LEFT: move
+                        Activity.LIGHT_LAYER: set_light,
+                        Activity.LIGHT_BACK: set_light,
+                        Activity.ADVANCE_UP: set_movement,
+                        Activity.ADVANCE_LEFT: set_movement
                     }
 
 
@@ -320,8 +320,8 @@ class Statemachine:
                 v_steps = steps['v_steps']
 
             if self.move:
-                move(self.hal, h_steps, True)
-                move(self.hal, v_steps, False)
+                set_movement(self.hal, h_steps, True)
+                set_movement(self.hal, v_steps, False)
 
         logger.debug(f'Setting chapter (cur: {self.chapter}) to {self.next_chapter}.')
         self.chapter = self.next_chapter

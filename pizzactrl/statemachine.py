@@ -74,8 +74,9 @@ class Statemachine:
         self.state = State.POWER_ON
         self.hal = PizzaHAL()
 
-        self.chapter = 0
-        self.next_chapter = 0
+        self.chapter = 0            # The storyboard index of the current chapter to play
+        self.next_chapter = 0       # The storyboard index of the next chapter to play
+        self.chapter_set = False    # `True` if the next chapter has been set
 
         self.story = None
         self.story_de = story_de
@@ -214,6 +215,7 @@ class Statemachine:
             Continue in the Storyboard. Prepare advancing to the next chapter.
             """
             self.move = self.MOVE
+            self.chapter_set = True
             if len(self.story) > (self.chapter + 1):
                 self.next_chapter = self.chapter + 1
             else:
@@ -223,6 +225,7 @@ class Statemachine:
             """
             Repeat the current chapter. Do not rewind if the selection says so.
             """
+            self.chapter_set = True
             self.move = rewind
             self.next_chapter = self.chapter
         
@@ -230,10 +233,12 @@ class Statemachine:
             """
             Jump to a specified chapter.
             """
+            self.chapter_set = True
             self.move = self.MOVE
             self.next_chapter = next_chapter
 
         def _quit(**kwargs):
+            self.chapter_set = True
             self.move = self.MOVE
             self.loop = not shutdown
             self.next_chapter = None
@@ -273,7 +278,10 @@ class Statemachine:
                         logger.exception('Caught KeyError, ignoring...')
                         pass
             
-            self.next_chapter = self.chapter + 1
+            if not self.chapter_set:
+                self.chapter_set = True
+                self.next_chapter = self.chapter + 1
+
         else:
             self.next_chapter = None
     
@@ -282,7 +290,7 @@ class Statemachine:
         Update chapters and move the scrolls.
         Update self.chapter to self.next_chapter
         """
-        if self.next_chapter is not None:
+        if self.chapter_set and (self.next_chapter is not None):
             diff = self.next_chapter - self.chapter
             h_steps = 0
             v_steps = 0
@@ -315,16 +323,18 @@ class Statemachine:
                 move(self.hal, h_steps, True)
                 move(self.hal, v_steps, False)
 
+        logger.debug(f'Setting chapter (cur: {self.chapter}) to {self.next_chapter}.')
         self.chapter = self.next_chapter
+        self.chapter_set = False
 
     def _rewind(self):
         """
         Rewind all scrolls, post-process videos
         """
         # TODO postprocessing - add sound
-        logger.debug('Converting video...')
-        cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
-        call([cmdstring], shell=True)
+        # logger.debug('Converting video...')
+        # cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
+        # call([cmdstring], shell=True)
 
         logger.debug('Rewinding...')
         if self.move:

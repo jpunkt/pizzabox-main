@@ -4,7 +4,7 @@ import threading
 from time import sleep
 from enum import Enum
 
-from typing import Any, List
+from typing import Any, List, Iterable
 from scipy.io.wavfile import write as writewav
 
 import sounddevice as sd
@@ -181,8 +181,7 @@ def turn_off(hal: PizzaHAL, **kwargs):
     """
     Turn off the lights.
     """
-    hal.send_cmd(SerialCommands.BACKLIGHT, 0)
-    hal.send_cmd(SerialCommands.FRONTLIGHT, 0)
+    light(hal, [SerialCommands.BACKLIGHT, SerialCommands.FRONTLIGHT], 0, 0, 0, 0, 0)
 
 
 def wait_for_input(hal: PizzaHAL,
@@ -243,12 +242,12 @@ def wait_for_input(hal: PizzaHAL,
 
 
 def light(hal: PizzaHAL,
+          light: Iterable,
           r: float, 
           g: float, 
           b: float, 
           w: float, 
-          fade: float = 0.0, 
-          backlight: bool = False,
+          fade: float = 0.0,
           **kwargs):
     """
     Turn on the light to illuminate the upper scroll
@@ -261,12 +260,14 @@ def light(hal: PizzaHAL,
     :param steps: int
                 How many steps for the fade (default: 100)
     """
-    hal.send_cmd(SerialCommands.BACKLIGHT if backlight else SerialCommands.FRONTLIGHT, 
-                 int(b * 255).to_bytes(1, 'little'),
-                 int(g * 255).to_bytes(1, 'little'),
-                 int(r * 255).to_bytes(1, 'little'),
-                 int(w * 255).to_bytes(1, 'little'), 
-                 int(fade * 1000).to_bytes(4, 'little'))
+    # TODO send light as bitmask
+    for l in iter(light):
+        hal.send_cmd(l, 
+                    int(b * 255).to_bytes(1, 'little'),
+                    int(g * 255).to_bytes(1, 'little'),
+                    int(r * 255).to_bytes(1, 'little'),
+                    int(w * 255).to_bytes(1, 'little'), 
+                    int(fade * 1000).to_bytes(4, 'little'))
 
 
 def play_sound(hal: PizzaHAL, sound: Any, **kwargs):

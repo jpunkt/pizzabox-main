@@ -1,5 +1,7 @@
 from enum import Enum, auto
 
+from pizzactrl.hal_serial import SerialCommands
+
 
 class Option(Enum):
     """
@@ -52,13 +54,13 @@ class Activity(Enum):
                       'b': 0,
                       'w': 1.0,
                       'fade': 1.0,
-                      'backlight': False}
+                      'light': [ SerialCommands.FRONTLIGHT ]}
     LIGHT_BACK =     {'r': 0,
                       'g': 0,
                       'b': 0,
                       'w': 1.0,
                       'fade': 1.0,
-                      'backlight': True}
+                      'light': [ SerialCommands.BACKLIGHT ]}
 
 
 class Do:

@@ -2,7 +2,7 @@ from pizzactrl import storyboard, fs_names
 
 STORYBOARD = [
     storyboard.Chapter(
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,   # VERT01
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,   # VERT01
                       intensity=1.0, fade=1.0)
     ),
     storyboard.Chapter(
@@ -19,7 +19,7 @@ STORYBOARD = [
         # storyboard.Do(storyboard.Activity.ADVANCE_UP, steps=90),  # VERT02down
         storyboard.Do(storyboard.Activity.LIGHT_BACK,
                       intensity=1.0, fade=0.5),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0.0, fade=0.5),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-05')),
@@ -32,7 +32,7 @@ STORYBOARD = [
                       sound=fs_names.StoryFile('IC-SIBI-07')),
         storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
         # storyboard.Do(storyboard.Activity.ADVANCE_UP),  # VERT04
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=1.0, fade=1.0),
     ),
     storyboard.Chapter(
@@ -41,7 +41,7 @@ STORYBOARD = [
         # storyboard.Do(storyboard.Activity.ADVANCE_LEFT), # HOR02
         storyboard.Do(storyboard.Activity.LIGHT_BACK,
                       intensity=1.0, fade=0.5),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0., fade=0.5),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-09')),
@@ -71,14 +71,14 @@ STORYBOARD = [
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-13')),
         # storyboard.Do(storyboard.Activity.ADVANCE_UP),  # VERT05
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=1.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-14')),
         # storyboard.Do(storyboard.Activity.ADVANCE_LEFT),  # HOR03
         storyboard.Do(storyboard.Activity.LIGHT_BACK,
                       intensity=1.0, fade=0.5),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0., fade=0.5),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-15')),
@@ -91,11 +91,11 @@ STORYBOARD = [
     storyboard.Chapter(
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-17')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=1.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-18')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-19')),
@@ -104,11 +104,11 @@ STORYBOARD = [
     storyboard.Chapter(
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-20')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=1.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-21')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-22')),
@@ -117,16 +117,16 @@ STORYBOARD = [
     storyboard.Chapter(
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-23')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=1.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-24')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0.0, fade=1.0),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('IC-SIBI-25')),
         storyboard.Do(storyboard.Activity.WAIT_FOR_INPUT),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=1.0, fade=1.0),
     ),
     storyboard.Chapter(
@@ -143,7 +143,7 @@ STORYBOARD = [
                       cache=False),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.SFX_STOP_REC),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0.0, fade=0.5),
         storyboard.Do(storyboard.Activity.LIGHT_BACK,
                       intensity=1.0, fade=0.5),

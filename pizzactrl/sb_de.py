@@ -112,7 +112,7 @@ STORYBOARD = [
         storyboard.Do(storyboard.Activity.ADVANCE_UP)   # Bild 9
     ),
     storyboard.Chapter(     # X9
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=1., fade=0.5),
         storyboard.Do(storyboard.Activity.LIGHT_BACK,
                       intensity=1., fade=0.5),
@@ -122,7 +122,7 @@ STORYBOARD = [
                       sound=fs_names.StoryFile('23de')),
         storyboard.Do(storyboard.Activity.PLAY_SOUND,
                       sound=fs_names.StoryFile('24de')),
-        storyboard.Do(storyboard.Activity.LIGHT_LAYER,
+        storyboard.Do(storyboard.Activity.LIGHT_FRONT,
                       intensity=0., fade=1.),
         storyboard.Do(storyboard.Activity.LIGHT_BACK,
                       intensity=0., fade=1.),

@@ -118,18 +118,18 @@ class PizzaHAL:
         :param hal:
         :param sounds: A list of sound files
         """
-        if self.soundcache is None:
-            self.soundcache = {}
+        # if self.soundcache is None:
+        #     self.soundcache = {}
 
         if not mx.get_init():
             mx.init()
 
-        if sounds is not None:
-            for sound in sounds:
-                # Extract data and sampling rate from file
-                # data, fs = sf.read(str(sound), dtype='float32')
-                # self.soundcache[str(sound)] = (data, fs)
-                self.soundcache[str(sound)] = mx.Sound(str(sound))
+        # if sounds is not None:
+        #     for sound in sounds:
+        #         # Extract data and sampling rate from file
+        #         # data, fs = sf.read(str(sound), dtype='float32')
+        #         # self.soundcache[str(sound)] = (data, fs)
+        #         self.soundcache[str(sound)] = mx.Sound(str(sound))
 
     def init_camera(self):
         if self.camera is None:
@@ -192,7 +192,6 @@ def turn_off(hal: PizzaHAL, **kwargs):
     """
     Turn off the lights.
     """
-
     set_light(hal, Lights.BACKLIGHT, 0, 0, 0, 0, 0)
     set_light(hal, Lights.FRONTLIGHT, 0, 0, 0, 0, 0)
     do_it(hal)
@@ -232,6 +231,7 @@ def wait_for_input(hal: PizzaHAL,
               (8 if green_cb else 0)
 
     if sound is not None:
+        logger.debug(f'Waiting for user, playing sound {sound}.')
         hal.play_sound(str(sound))
 
     resp = hal.send_cmd(SerialCommands.USER_INTERACT, bitmask.to_bytes(1, 'little', signed=False), timeout.to_bytes(4, 'little', signed=False))

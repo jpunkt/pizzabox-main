@@ -1,18 +1,11 @@
 import logging
 import os.path
 
-from typing import Any
-
-from time import sleep
-
 from enum import Enum, auto
-from subprocess import call
 
-from pizzactrl import SOUNDS_PATH, fs_names
-from pizzactrl.hal import ScrollSensor
-from .storyboard import Language, Activity, Select, Option, Storyboard
+from pizzactrl import fs_names
+from .storyboard import Language, Storyboard
 from .hal_serial import SerialCommunicationError, PizzaHAL, wait_for_input, play_sound, turn_off
-from pizzactrl import storyboard
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +75,21 @@ class Statemachine:
 
         self._shutdown()
 
+    def _lid_open(self):
+        # TODO implement
+        pass
+
+    def _lid_closed(self):
+        # TODO implement
+        pass
+
     def _power_on(self):
         """
         Initialize hal callbacks, load sounds
         """
         # TODO enable lid sensor
-        # self.hal.lid_sensor.when_pressed = self._lid_open
-        # self.hal.lid_sensor.when_released = self._lid_closed
+        self.hal.lid_switch.when_pressed = self._lid_open
+        self.hal.lid_switch.when_released = self._lid_closed
         
         self.hal.init_sounds()
         self.hal.init_camera()

@@ -12,12 +12,12 @@ import soundfile as sf
 
 import pygame.mixer as mx
 
-from . import gpio_pins
-
 from picamera import PiCamera
 from gpiozero import Button
 
 import serial
+
+from .gpio_pins import *
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class PizzaHAL:
     def __init__(self, serialdev: str = SERIAL_DEV, baudrate: int = SERIAL_BAUDRATE, timeout: float = SERIAL_CONN_TIMEOUT):
         self.serialcon = serial.Serial(serialdev, baudrate=baudrate, timeout=timeout)
 
-        self.btn_start = Button(gpio_pins.BTN_START)
+        self.lid_switch = Button(LID_SWITCH)
 
         self.camera = None
         self.soundcache = {}

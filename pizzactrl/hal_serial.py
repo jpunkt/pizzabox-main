@@ -169,6 +169,7 @@ class PizzaHAL:
 def set_movement(hal: PizzaHAL, 
          scroll: Scrolls,
          steps: int,
+         speed: int,
          **kwargs):
     """
     Move the motor controlling the vertical scroll a given distance.
@@ -177,7 +178,8 @@ def set_movement(hal: PizzaHAL,
     scroll = int(scroll.value)
     hal.send_cmd(SerialCommands.SET_MOVEMENT,
                  scroll.to_bytes(1, 'little', signed=False),
-                 steps.to_bytes(2, 'little', signed=True))
+                 steps.to_bytes(2, 'little', signed=True),
+                 speed.to_bytes(1, 'little', signed=False))
 
 
 def rewind(hal: PizzaHAL, **kwargs):

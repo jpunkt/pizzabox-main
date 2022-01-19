@@ -1,6 +1,5 @@
 import logging
-import functools
-import threading
+
 from time import sleep
 from enum import Enum
 
@@ -13,7 +12,7 @@ import soundfile as sf
 import pygame.mixer as mx
 
 from picamera import PiCamera
-from gpiozero import Button
+from gpiozero import Button, DigitalOutputDevice, DigitalInputDevice
 
 import serial
 
@@ -29,7 +28,8 @@ AUDIO_REC_SR = 44100      # Audio Recording Samplerate
 
 SERIAL_DEV = '/dev/serial0' # Serial port to use
 SERIAL_BAUDRATE = 115200    # Serial connection baud rate
-SERIAL_CONN_TIMEOUT = 60    # Serial connection read timeout
+SERIAL_CONN_TIMEOUT = 0.2     # Serial connection read timeout
+HELO_TIMEOUT = 20
 
 
 class Lights(Enum):
@@ -47,6 +47,7 @@ class SerialCommands(Enum):
     ALREADY_CONNECTED = b'\x01'
     ERROR = b'\x02'
     RECEIVED = b'\x03'
+    ABORT = b'\x63'     # 99 decimal
 
     SET_MOVEMENT = b'M'
     SET_LIGHT = b'L'
@@ -62,6 +63,10 @@ class SerialCommands(Enum):
     DEBUG_SENSORS = b'Z'
 
     EOT = b'\n'
+
+
+class CommunicationError(Exception):
+    pass
 
 
 class SerialCommunicationError(Exception):
@@ -84,16 +89,43 @@ class PizzaHAL:
     def __init__(self, serialdev: str = SERIAL_DEV, baudrate: int = SERIAL_BAUDRATE, timeout: float = SERIAL_CONN_TIMEOUT):
         self.serialcon = serial.Serial(serialdev, baudrate=baudrate, timeout=timeout)
 
+        # Lid switch with pull-up. is_pressed = True when lid is open
         self.lid_switch = Button(LID_SWITCH)
+        self.pin_helo1 = DigitalOutputDevice(HELO1)
+        self.pin_helo2 = DigitalInputDevice(HELO2)
 
         self.camera = None
         self.soundcache = {}
 
         self.connected = False
 
+    @property
+    def lid_open(self) -> bool:
+        """
+        Returns True when the lid is open
+        """
+        return self.lid_switch.is_pressed
+
     def init_connection(self):
+        """
+        Set HELO1 pin to `High`, wait for HELO2 to be set `High` by microcontroller.
+        
+        Then perform serial handshake.
+        """
+        self.pin_helo1.on()
+        timer = 0
+        while (not self.pin_helo2.value) and (timer < HELO_TIMEOUT):
+            sleep(0.1)
+            timer += 1
+            if not (timer % 100):
+                logger.info(f'Waiting for connection ({timer / 10}s)')
+        
+        if not self.pin_helo2.value:
+            raise CommunicationError('Microcontroller did not respond to HELO pin.')
+
         self.serialcon.write(SerialCommands.HELLO.value + SerialCommands.EOT.value)
         resp = self.serialcon.read_until()
+        
         if resp == (SerialCommands.HELLO.value + SerialCommands.EOT.value):
             self.serialcon.write(SerialCommands.ALREADY_CONNECTED.value + SerialCommands.EOT.value)
             resp = self.serialcon.read_until()
@@ -109,6 +141,7 @@ class PizzaHAL:
             raise SerialCommunicationError('Timeout on initializing connection.')
         else:
             raise SerialCommunicationError(f'Serial Connection received invalid response to HELLO: {resp}')
+        
         self.connected = True
     
     def init_sounds(self, sounds: List=None):
@@ -118,18 +151,15 @@ class PizzaHAL:
         :param hal:
         :param sounds: A list of sound files
         """
-        # if self.soundcache is None:
-        #     self.soundcache = {}
+        if self.soundcache is None:
+            self.soundcache = {}
 
         if not mx.get_init():
             mx.init()
 
-        # if sounds is not None:
-        #     for sound in sounds:
-        #         # Extract data and sampling rate from file
-        #         # data, fs = sf.read(str(sound), dtype='float32')
-        #         # self.soundcache[str(sound)] = (data, fs)
-        #         self.soundcache[str(sound)] = mx.Sound(str(sound))
+        if sounds is not None:
+            for sound in sounds:
+                self.soundcache[str(sound)] = mx.Sound(str(sound))
 
     def init_camera(self):
         if self.camera is None:
@@ -143,27 +173,47 @@ class PizzaHAL:
         if mx.get_busy():
             mx.stop()
 
-    def send_cmd(self, command: SerialCommands, *options):
+    def send_cmd(self, command: SerialCommands, *options, ignore_lid: bool=False):
         """
         Send a command and optional options. Options need to be encoded as bytes before passing.
+
+        This function is blocking.
+
+        Returns the response from the microcontroller or `None` if the lid was closed and `ignore_lid` is `False`.
+        
+        Raises a SerialCommunicationError if serial connection was not initialized or a response other than
+        SerialCommands.RECEIVED was received.
+        
+        Raises a CommunicationError if the HELO2 pin goes low while waiting for response.
         """
         if not self.connected:
             raise SerialCommunicationError("Serial Communication not initialized. Call `init_connection()` before `send_cmd()`.")
+
         self.serialcon.write(command.value)
         for o in options:
             self.serialcon.write(o)
-        self.serialcon.write(SerialCommands.EOT.value)   
-        resp = self.serialcon.read_until()
         
-        while resp == b'':
+        self.serialcon.write(SerialCommands.EOT.value)   
+        resp = b''
+        while resp is b'':
             # If serial communication timeout occurs, response is empty.
             # Read again to allow for longer waiting times
+            if not self.pin_helo2.value:
+                raise CommunicationError('Pin HELO2 LOW. Microcontroller in error state or lost connection.')
+            if (not ignore_lid) and (not self.lid_open):
+                logger.info('Lid closed while processing command. Returning None.')
+                return None
             resp = self.serialcon.read_until()
+
+        logger.debug(f'hal.send_cmd() received {resp}')
 
         if not resp.startswith(SerialCommands.RECEIVED.value):
             raise SerialCommunicationError(f'Serial Communication received unexpected response: {resp}')
         
         return resp
+
+    def flush_serial(self):
+        self.serialcon.read_all()
 
 
 def set_movement(hal: PizzaHAL, 
@@ -187,16 +237,16 @@ def rewind(hal: PizzaHAL, **kwargs):
     Rewind both scrolls.
 
     """
-    hal.send_cmd(SerialCommands.REWIND)
+    hal.send_cmd(SerialCommands.REWIND, ignore_lid=True)
 
 
 def turn_off(hal: PizzaHAL, **kwargs):
     """
     Turn off the lights.
     """
-    set_light(hal, Lights.BACKLIGHT, 0, 0, 0, 0, 0)
-    set_light(hal, Lights.FRONTLIGHT, 0, 0, 0, 0, 0)
-    do_it(hal)
+    set_light(hal, Lights.BACKLIGHT, 0, 0, 0, 0, 0, ignore_lid=True)
+    set_light(hal, Lights.FRONTLIGHT, 0, 0, 0, 0, 0, ignore_lid=True)
+    do_it(hal, ignore_lid=True)
 
 
 def wait_for_input(hal: PizzaHAL,
@@ -241,6 +291,13 @@ def wait_for_input(hal: PizzaHAL,
     if sound is not None:
         hal.stop_sound()
     
+    if resp is None:
+        # lid was closed by user
+        logger.info('Lid closed during wait_for_input(). Sending ABORT.')
+        hal.send_cmd(SerialCommands.ABORT, ignore_lid=True)
+        hal.flush_serial()
+        return
+
     if len(resp) != 3:
         raise SerialCommunicationError(f'USER_INTERACTION expects 3 bytes, received {resp}')
     
@@ -278,14 +335,18 @@ def set_light(hal: PizzaHAL,
     hal.send_cmd(SerialCommands.SET_LIGHT,
                  int(light.value).to_bytes(1, 'little'), 
                  int(color).to_bytes(4, 'little'), 
-                 int(fade * 1000).to_bytes(4, 'little'))
+                 int(fade * 1000).to_bytes(4, 'little'),
+                 ignore_lid=kwargs.get('ignore_lid', False))
 
 
-def do_it(hal: PizzaHAL):
+def do_it(hal: PizzaHAL, ignore_lid: bool=False, **kwargs):
     """
     Execute set commands
     """
-    hal.send_cmd(SerialCommands.DO_IT)
+    if hal.send_cmd(SerialCommands.DO_IT, ignore_lid=ignore_lid) is None:
+        logger.info('Lid closed during do_it(). Sending ABORT.')
+        hal.send_cmd(SerialCommands.ABORT, ignore_lid=True)
+        hal.flush_serial()
 
 
 def play_sound(hal: PizzaHAL, sound: Any, **kwargs):
@@ -298,10 +359,13 @@ def play_sound(hal: PizzaHAL, sound: Any, **kwargs):
     # Extract data and sampling rate from file
     try:
         hal.play_sound(str(sound))
-        while mx.get_busy():
+        while mx.get_busy() and hal.lid_open:
             pass
+        if not hal.lid_open:
+            hal.stop_sound()
+
     except KeyboardInterrupt:
-        mx.stop()
+        hal.stop_sound()
         logger.debug('skipped playback')
 
 

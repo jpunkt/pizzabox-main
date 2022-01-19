@@ -5,9 +5,13 @@ from enum import Enum, auto
 
 from pizzactrl import fs_names
 from .storyboard import Language, Storyboard
-from .hal_serial import SerialCommunicationError, PizzaHAL, wait_for_input, play_sound, turn_off
+from .hal_serial import SerialCommunicationError, CommunicationError, PizzaHAL, wait_for_input, play_sound, turn_off
 
 logger = logging.getLogger(__name__)
+
+
+class FileSystemException(Exception):
+    pass
 
 
 class State(Enum):
@@ -16,7 +20,6 @@ class State(Enum):
     IDLE_START = auto()
     LANGUAGE_SELECT = auto()
     PLAY = auto()
-    PAUSE = auto()
     POST_PROCESS = auto()
     REWIND = auto()
     IDLE_END = auto()
@@ -43,7 +46,16 @@ class Statemachine:
         self.test = test
         self.loop = loop
         
-        self.state = State.POWER_ON        
+        self.state = State.POWER_ON      
+
+    def _next_state(self):
+        """
+        Set `self.state` to the next state
+        """
+        try:
+            self.state = State(self.state.value + 1)
+        except ValueError:
+            pass
 
     def run(self):
         logger.debug(f'Starting Statemachine...')
@@ -62,7 +74,14 @@ class Statemachine:
         while (self.state is not State.ERROR) and \
                 (self.state is not State.SHUTDOWN):
             logger.debug(f'Run(state={self.state})')
-            choice[self.state]()
+            try:
+                choice[self.state]()
+            except (CommunicationError, SerialCommunicationError) as e:
+                self.state = State.ERROR
+                logger.error('Communication with microcontroller failed.', e)
+            except Exception as e:
+                self.state = State.ERROR
+                logger.error(e)
 
         if self.state is State.ERROR:
             logger.debug('An error occurred. Trying to notify user...')
@@ -75,63 +94,38 @@ class Statemachine:
 
         self._shutdown()
 
-    def _lid_open(self):
-        # TODO implement
-        pass
-
-    def _lid_closed(self):
-        # TODO implement
-        pass
-
     def _power_on(self):
         """
         Initialize hal callbacks, load sounds
         """
-        # TODO enable lid sensor
-        self.hal.lid_switch.when_pressed = self._lid_open
-        self.hal.lid_switch.when_released = self._lid_closed
-        
         self.hal.init_sounds()
         self.hal.init_camera()
 
-        self.state = State.POST
+        self._next_state()
 
     def _post(self):
         """
         Power on self test.
         """
         if (not self.test) and (not os.path.exists(fs_names.USB_STICK)):
-            logger.warning('USB-Stick not found.')
-            self.state = State.ERROR
-            return
+            raise FileSystemException('USB Stick not present!')
 
-        # TODO set RPi_HELO pins, wait for response
-
-        # Callback for start when blue button is held
-        # self.hal.btn_start.when_activated = self._start_or_rewind
-        # logger.debug('start button callback activated')
-
-        try:
-            self.hal.init_connection()
-        except SerialCommunicationError as e:
-            self.state = State.ERROR
-            logger.exception(e)
-            return
-
+        self.hal.init_connection()
+        
         # play a sound if everything is alright
         play_sound(self.hal, fs_names.SFX_POST_OK)
 
         if self.test:
             self.state = State.LANGUAGE_SELECT
         else:
-            self.state = State.IDLE_START
+            self._next_state()
         
-
     def _idle_start(self):
         """
-        Device is armed. Wait for user to press start button
+        Device is armed. Wait for user to open the lid
         """
-        pass
+        if self.hal.lid_open:
+            self._next_state()
 
     def _lang_select(self):
         """
@@ -158,7 +152,7 @@ class Statemachine:
         self.story.language = self.lang
 
         logger.debug(f'User selected language={self.lang}')
-        self.state = State.PLAY
+        self._next_state()
 
     def _play(self):
         """
@@ -170,7 +164,7 @@ class Statemachine:
             self.story.play_chapter()
             self.story.advance_chapter()
             
-        self.state = State.POST_PROCESS
+        self._next_state()
 
     def _post_process(self):
         """
@@ -181,7 +175,7 @@ class Statemachine:
         # cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
         # call([cmdstring], shell=True)
         
-        self.state = State.REWIND
+        self._next_state()
     
     def _rewind(self):
         """
@@ -193,16 +187,18 @@ class Statemachine:
         if self.loop:
             self.state = State.IDLE_START
         else:
-            self.state = State.IDLE_END
+            self._next_state()
 
     def _idle_end(self):
         """
         Initialize shutdown
         """
-        self.state = State.SHUTDOWN
+        self._next_state()
 
     def _shutdown(self):
         """
         Clean up, end execution
         """
+        self.hal.pin_helo1.off()
         del self.hal
+        del self.story

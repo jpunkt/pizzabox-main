@@ -294,8 +294,8 @@ def wait_for_input(hal: PizzaHAL,
     if resp is None:
         # lid was closed by user
         logger.info('Lid closed during wait_for_input(). Sending ABORT.')
-        hal.send_cmd(SerialCommands.ABORT, ignore_lid=True)
         hal.flush_serial()
+        hal.send_cmd(SerialCommands.ABORT, ignore_lid=True)
         return
 
     if len(resp) != 3:
@@ -345,8 +345,8 @@ def do_it(hal: PizzaHAL, ignore_lid: bool=False, **kwargs):
     """
     if hal.send_cmd(SerialCommands.DO_IT, ignore_lid=ignore_lid) is None:
         logger.info('Lid closed during do_it(). Sending ABORT.')
-        hal.send_cmd(SerialCommands.ABORT, ignore_lid=True)
         hal.flush_serial()
+        hal.send_cmd(SerialCommands.ABORT, ignore_lid=True)
 
 
 def play_sound(hal: PizzaHAL, sound: Any, **kwargs):
@@ -384,11 +384,17 @@ def record_sound(hal: PizzaHAL, filename: Any,
                          samplerate=AUDIO_REC_SR,
                          channels=2)
     
-    hal.send_cmd(SerialCommands.RECORD, int(duration*1000).to_bytes(4, 'little', signed=False))
+    resp = hal.send_cmd(SerialCommands.RECORD, int(duration*1000).to_bytes(4, 'little', signed=False))
 
     sd.stop()
     
     writewav(str(filename), AUDIO_REC_SR, myrecording)
+
+    if resp is None:
+        logger.info('Lid closed during record(). Sending ABORT.')
+        hal.flush_serial()
+        hal.send_cmd(SerialCommands.ABORT, ignore_lid=True)
+        return
 
     if cache:
         hal.soundcache[str(filename)] = (myrecording, AUDIO_REC_SR)
@@ -404,7 +410,12 @@ def record_video(hal: PizzaHAL, filename: Any, duration: float, **kwargs):
     """
     hal.camera.resolution = VIDEO_RES
     hal.camera.start_recording(str(filename))
-    hal.camera.wait_recording(duration)
+    
+    t = 0
+    while hal.lid_open and (t < duration):
+        hal.camera.wait_recording(0.1)
+        t += 0.1
+    
     hal.camera.stop_recording()
 
 
@@ -415,6 +426,9 @@ def take_photo(hal: PizzaHAL, filename: Any, **kwargs):
     :param hal: The hardware abstraction object
     :param filename: The path of the filename for the foto
     """
+    if not hal.lid_open:
+        return
+    
     hal.camera.resolution = PHOTO_RES
     hal.camera.capture(str(filename))
 

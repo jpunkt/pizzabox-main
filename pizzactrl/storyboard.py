@@ -3,9 +3,9 @@ from enum import Enum, auto
 from threading import active_count
 from typing import List, Any
 
-from pizzactrl.hal_serial import Lights, Scrolls, SerialCommands, PizzaHAL, \
+from pizzactrl.hal_serial import Lights, Scrolls, \
                                  do_it, play_sound, take_photo, record_video, \
-                                 record_sound, turn_off, wait_for_input, \
+                                 record_sound, wait_for_input, \
                                  set_light, set_movement, rewind
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class ConfigurationException(Exception):
 
 
 class Language(Enum):
-    NOT_SET = 'NA'
+    NOT_SET = 'sound'
     DE = 'DE'
     EN = 'EN'
 
@@ -25,10 +25,10 @@ class Option(Enum):
     """
     Options can be chosen by the user in WAIT_FOR_INPUT
     """
-    CONTINUE = {}               # Continue with chapter
-    REPEAT = {'rewind': True}   # Repeat chapter from beginning. `rewind=True`: reset scrolls to starting position  
-    GOTO = {'chapter': 0}       # Jump to chapter number
-    QUIT = {'quit': True}       # End playback.
+    CONTINUE = {'skip_flag': False}     # Continue with chapter. Set `skip_flag=True` to skip all chapters marked with `skip_flag`
+    REPEAT = {'rewind': True}           # Repeat chapter from beginning. `rewind=True`: reset scrolls to starting position  
+    GOTO = {'chapter': 0}               # Jump to chapter number
+    QUIT = {'quit': True}               # End playback.
 
 
 class Select:
@@ -47,11 +47,11 @@ class Activity(Enum):
     """
     Things the box can do
     """
-    WAIT_FOR_INPUT = {'on_blue': Select(Option.CONTINUE), 
-                      'on_red': Select(Option.REPEAT), 
+    WAIT_FOR_INPUT = {'on_blue': Select(None), 
+                      'on_red': Select(None), 
                       'on_yellow': Select(None), 
                       'on_green': Select(None), 
-                      'on_timeout': Select(Option.QUIT),
+                      'on_timeout': Select(None),
                       Language.NOT_SET.value: None,
                       Language.DE.value: None,
                       Language.EN.value: None, 
@@ -65,10 +65,10 @@ class Activity(Enum):
     RECORD_VIDEO =   {'duration': 60.0, 
                       'filename': ''}
     TAKE_PHOTO =     {'filename': ''}
-    ADVANCE_UP =     {'steps': 100,
+    ADVANCE_UP =     {'steps': 42,
                       'scroll': Scrolls.VERTICAL,
                       'speed': 4}
-    ADVANCE_LEFT =   {'steps': 200,
+    ADVANCE_LEFT =   {'steps': 84,
                       'scroll': Scrolls.HORIZONTAL,
                       'speed': 4}
     LIGHT_FRONT =    {'r': 0,
@@ -129,8 +129,9 @@ class Chapter:
 
     Keeps track of advanced steps on the scrolls.
     """
-    def __init__(self, *activities):
+    def __init__(self, *activities, skip_flag: bool=False):
         self.activities = activities
+        self.skip_flag = skip_flag
         self.index = 0
         self.h_pos = 0
         self.v_pos = 0
@@ -184,13 +185,17 @@ class Chapter:
         return {'h_steps': self.h_pos - h_pos, 'v_steps': self.v_pos - v_pos}
 
 
-def _get_sound(language, **kwargs):
+def _get_sound(language: Language, **kwargs):
     """
     Select the right sound depending on the language
     """
-    sound = kwargs.get(language, kwargs.get(Language.NOT_SET.value, None))
+    sound = kwargs.get(language.value, None)
+
     if sound is None:
-        logger.debug(f'_get_sound(language={language}) Could not find sound, returning None.')
+        # internationalized language may be None, so check this twice
+        sound = kwargs.get(Language.NOT_SET.value, None)
+
+    logger.debug(f'_get_sound(language={language})={sound}')
     
     return sound
 
@@ -203,6 +208,8 @@ class Storyboard:
         self._index = 0            # The storyboard index of the current chapter to play
         self._next_chapter = 0       # The storyboard index of the next chapter to play
         self._chapter_set = False    # `True` if the next chapter has been set
+
+        self._skip_flag = False     # Set `True` to skip chapters marked with skip_flag
 
         self.MOVE = False          # self.move is reset to this value
         self._move = self.MOVE
@@ -251,6 +258,7 @@ class Storyboard:
         # rewind = selection.values.get('rewind', Option.REPEAT.value['rewind'])
         # next_chapter = selection.values.get('chapter', Option.GOTO.value['chapter'])
         # shutdown = selection.values.get('shutdown', Option.QUIT.value['shutdown'])
+        self._skip_flag = selection.values.get('skip_flag', Option.CONTINUE.value['skip_flag'])
         
         def _continue(**kwargs):
             """
@@ -307,20 +315,22 @@ class Storyboard:
             Handle Activity.PLAY_SOUND
             """
             logger.debug(f'Storyboard._play_sound({kwargs})')
-            play_sound(hal, sound=_get_sound(language=self.language, **kwargs), **kwargs)
+            play_sound(hal, sound=_get_sound(language=self.language, **kwargs))
 
         def _wait_for_input(hal, sound=None, **kwargs):
             """
             Handle Activity.WAIT_FOR_INPUT
             """
             logger.debug(f'Storyboard._wait_for_input({kwargs})')
+            
+            kwargs['sound'] = _get_sound(language=self.language, **kwargs)
+
             wait_for_input(hal=hal,
                         blue_cb = self._option_callback(kwargs['on_blue']),
                         red_cb = self._option_callback(kwargs['on_red']),
                         yellow_cb = self._option_callback(kwargs['on_yellow']),
                         green_cb = self._option_callback(kwargs['on_green']),
                         timeout_cb = self._option_callback(kwargs['on_timeout']),
-                        sound = _get_sound(language=self.language, **kwargs),
                         **kwargs)
 
         def _parallel(hal, activities: List[Do], **kwargs):
@@ -329,8 +339,7 @@ class Storyboard:
             """
             logger.debug(f'Storyboard._parallel({activities})')
             for paract in activities:
-                self.ACTIVITY_SELECTOR[paract.activity](hal, do_now=False, **paract.values)
-            
+                self.ACTIVITY_SELECTOR[paract.activity](hal, do_now=False, **paract.values)   
             do_it(self.hal)
 
         def _move(hal, do_now=True, **kwargs):
@@ -368,6 +377,11 @@ class Storyboard:
 
         if self._index < len(self.story):
             chapter = self.story[self._index]
+            if self._skip_flag and chapter.skip_flag:
+                # Skip all chapters marked with skip_flag
+                self.next_chapter = self._index + 1
+                self._chapter_set = True
+                return
 
             while chapter.hasnext():
                 act = next(chapter)
@@ -375,7 +389,7 @@ class Storyboard:
                 try:
                     self.ACTIVITY_SELECTOR[act.activity](self.hal, **act.values)
                 except KeyError as e:
-                    raise ConfigurationException('Missing handler for {act.activity}', e)
+                    raise ConfigurationException(f'Missing handler for {act.activity}', e)
             
             if not self._chapter_set:
                 self._chapter_set = True
@@ -423,8 +437,8 @@ class Storyboard:
                 v_steps = steps['v_steps']
 
             if self.move:
-                set_movement(self.hal, scroll=Scrolls.HORIZONTAL, steps=h_steps)
-                set_movement(self.hal, scroll=Scrolls.VERTICAL, steps=v_steps)
+                set_movement(self.hal, scroll=Scrolls.HORIZONTAL, steps=h_steps, speed=4)
+                set_movement(self.hal, scroll=Scrolls.VERTICAL, steps=v_steps, speed=4)
                 do_it(self.hal)
 
         logger.debug(f'Setting chapter (cur: {self._index}) to {self._next_chapter}.')

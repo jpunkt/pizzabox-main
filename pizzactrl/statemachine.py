@@ -144,8 +144,8 @@ class Statemachine:
         #logger.debug(f'got sound {sound} from soundcache.')
 
         wait_for_input(self.hal,
-                       blue_cb=_select_de,
-                       red_cb=_select_en,
+                       red_cb=_select_de,
+                       green_cb=_select_en,
                        sound=fs_names.SND_SELECT_LANG,
                        timeout_cb=_select_default)
 

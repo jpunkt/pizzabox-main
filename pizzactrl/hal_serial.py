@@ -397,7 +397,7 @@ def record_sound(hal: PizzaHAL, filename: Any,
         return
 
     if cache:
-        hal.soundcache[str(filename)] = (myrecording, AUDIO_REC_SR)
+        hal.soundcache[str(filename)] = mx.Sound(str(filename))
 
 
 def record_video(hal: PizzaHAL, filename: Any, duration: float, **kwargs):

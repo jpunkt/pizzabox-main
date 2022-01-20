@@ -159,6 +159,7 @@ class Statemachine:
         Select language, then run the storyboard
         """
         self.story.hal = self.hal
+        fs_names.generate_session_id()
 
         while self.story.hasnext():
             self.story.play_chapter()

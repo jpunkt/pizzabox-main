@@ -12,10 +12,19 @@ Paths to files
 """
 # Base paths
 _STORY_SOUNDS = '/home/pi/sounds/'
-_SFX_SOUNDS = 'sounds/'
 _REC_FILES = '/home/pi/pizzafiles/'
 
 USB_STICK = _REC_FILES + '.stick'
+
+
+def generate_session_id():
+    FileHandle.uuid = str(uuid4())
+    logger.info(f'generated uuid for session: {FileHandle.uuid}')
+    try:
+        os.mkdir(_REC_FILES + FileHandle.uuid)
+        FileHandle.uuid += '/'
+    except OSError:
+        FileHandle.uuid = ''
 
 
 class FileType(Enum):
@@ -36,13 +45,7 @@ class FileHandle:
         # Create a uuid and fitting folder if not present
         # All RecFiles for this session will be added to this foldere
         if FileHandle.uuid is None:
-            FileHandle.uuid = str(uuid4())
-            logger.info(f'generated uuid for session: {FileHandle.uuid}')
-            try:
-                os.mkdir(_REC_FILES + FileHandle.uuid)
-                FileHandle.uuid += '/'
-            except OSError:
-                FileHandle.uuid = ''
+            generate_session_id()
 
     def __str__(self):
         """

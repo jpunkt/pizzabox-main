@@ -65,12 +65,12 @@ class Activity(Enum):
     RECORD_VIDEO =   {'duration': 60.0, 
                       'filename': ''}
     TAKE_PHOTO =     {'filename': ''}
-    ADVANCE_UP =     {'steps': 42,
+    ADVANCE_UP =     {'steps': 46,
                       'scroll': Scrolls.VERTICAL,
-                      'speed': 4}
-    ADVANCE_LEFT =   {'steps': 84,
+                      'speed': 3}
+    ADVANCE_LEFT =   {'steps': 96,
                       'scroll': Scrolls.HORIZONTAL,
-                      'speed': 4}
+                      'speed': 3}
     LIGHT_FRONT =    {'r': 0,
                       'g': 0,
                       'b': 0,
@@ -209,7 +209,7 @@ class Storyboard:
         self._next_chapter = 0       # The storyboard index of the next chapter to play
         self._chapter_set = False    # `True` if the next chapter has been set
 
-        self._skip_flag = False     # Set `True` to skip chapters marked with skip_flag
+        self.skip_flag = False     # Set `True` to skip chapters marked with skip_flag
 
         self.MOVE = False          # self.move is reset to this value
         self._move = self.MOVE
@@ -258,7 +258,9 @@ class Storyboard:
         # rewind = selection.values.get('rewind', Option.REPEAT.value['rewind'])
         # next_chapter = selection.values.get('chapter', Option.GOTO.value['chapter'])
         # shutdown = selection.values.get('shutdown', Option.QUIT.value['shutdown'])
-        self._skip_flag = selection.values.get('skip_flag', Option.CONTINUE.value['skip_flag'])
+        _skip_flag = selection.values.get('skip_flag', None)
+        if _skip_flag is not None:
+            self.skip_flag = _skip_flag
         
         def _continue(**kwargs):
             """
@@ -278,12 +280,12 @@ class Storyboard:
             self.next_chapter = self._index
             self.move = rewind
         
-        def _goto(next_chapter: int=None, **kwargs):
+        def _goto(chapter: int=None, **kwargs):
             """
             Jump to a specified chapter.
             """
-            logger.debug(f'User selected goto {next_chapter}')
-            self.next_chapter = next_chapter
+            logger.debug(f'User selected goto {chapter}')
+            self.next_chapter = chapter
 
         def _quit(**kwargs):
             logger.debug('User selected quit')
@@ -377,13 +379,13 @@ class Storyboard:
 
         if self._index < len(self.story):
             chapter = self.story[self._index]
-            if self._skip_flag and chapter.skip_flag:
+            if self.skip_flag and chapter.skip_flag:
                 # Skip all chapters marked with skip_flag
                 self.next_chapter = self._index + 1
                 self._chapter_set = True
                 return
 
-            while chapter.hasnext():
+            while chapter.hasnext() and self.hal.lid_open:
                 act = next(chapter)
                 logger.debug(f'next activity {act.activity}')
                 try:
@@ -436,7 +438,7 @@ class Storyboard:
                 h_steps = steps['h_steps']
                 v_steps = steps['v_steps']
 
-            if self.move:
+            if self.move and ((h_steps != 0) or (v_steps != 0)):
                 set_movement(self.hal, scroll=Scrolls.HORIZONTAL, steps=h_steps, speed=4)
                 set_movement(self.hal, scroll=Scrolls.VERTICAL, steps=v_steps, speed=4)
                 do_it(self.hal)

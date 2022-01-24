@@ -161,7 +161,7 @@ class Statemachine:
         self.story.hal = self.hal
         fs_names.generate_session_id()
 
-        while self.story.hasnext():
+        while self.story.hasnext() and self.hal.lid_open:
             self.story.play_chapter()
             self.story.advance_chapter()
             
@@ -175,7 +175,7 @@ class Statemachine:
         # logger.debug('Converting video...')
         # cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
         # call([cmdstring], shell=True)
-        
+        self.hal.flush_serial()
         self._next_state()
     
     def _rewind(self):
@@ -183,6 +183,7 @@ class Statemachine:
         Rewind all scrolls, post-process videos
         """
         turn_off(self.hal)
+        self.story.skip_flag = False
         self.story.rewind()
 
         if self.loop:

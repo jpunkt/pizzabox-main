@@ -47,10 +47,13 @@ STORYBOARD = Storyboard(
         Do(Activity.PARALLEL,
         activities=[
             Do(Activity.LIGHT_FRONT,
-                fade=3.0),
+                fade=1.0),
             Do(Activity.LIGHT_BACK,
                 w=1.0,
-                fade=3.0)
+                fade=1.0),
+            Do(Activity.ADVANCE_LEFT,
+                steps=26,
+                speed=3)
         ]),
         Do(Activity.PLAY_SOUND,
             DE=fs_names.StoryFile('DE02'),
@@ -116,14 +119,12 @@ STORYBOARD = Storyboard(
             Do(Activity.LIGHT_FRONT,
                 w=1.0,
                 fade=2.0),
-            Do(Activity.ADVANCE_UP,
-                steps=84)
+            Do(Activity.ADVANCE_UP)
         ]),
         Do(Activity.PLAY_SOUND,
             DE=fs_names.StoryFile('DE11'),
             EN=fs_names.StoryFile('EN11')),
         Do(Activity.ADVANCE_UP,
-            steps=42,
             speed=2),
         Do(Activity.PLAY_SOUND,
             DE=fs_names.StoryFile('DE12'),
@@ -135,8 +136,11 @@ STORYBOARD = Storyboard(
                 fade=1.0),
             Do(Activity.LIGHT_FRONT,
                 fade=1.0),
+            Do(Activity.ADVANCE_UP,
+                steps=41,
+                speed=2),
             Do(Activity.ADVANCE_LEFT,
-                steps=90)
+            steps=182)
         ]),
         Do(Activity.PLAY_SOUND,
             DE=fs_names.StoryFile('DE13'),
@@ -207,7 +211,7 @@ STORYBOARD = Storyboard(
         activities=[
             Do(Activity.LIGHT_BACK,
                 w=1.0,
-                fade=3.0),
+                fade=2.0),
             Do(Activity.LIGHT_FRONT,
                 fade=1.0),
             Do(Activity.ADVANCE_UP),    # TODO Vert07, Hor04
@@ -224,7 +228,7 @@ STORYBOARD = Storyboard(
                 w=1.0,
                 fade=1.0),
             Do(Activity.ADVANCE_UP,     # TODO Vert06
-                steps=-48,
+                steps=-41,
                 speed=3)
         ]),
         Do(Activity.PLAY_SOUND,
@@ -238,7 +242,7 @@ STORYBOARD = Storyboard(
         activities=[
             Do(Activity.LIGHT_BACK,
                 w=1.0,
-                fade=3.0),
+                fade=2.0),
             Do(Activity.LIGHT_FRONT,
                 fade=1.0),
             Do(Activity.ADVANCE_UP,
@@ -357,7 +361,7 @@ STORYBOARD = Storyboard(
         activities=[
             Do(Activity.LIGHT_BACK,
                 w=1.0,
-                fade=3.0),
+                fade=2.0),
             Do(Activity.LIGHT_FRONT,
                 fade=0),
             Do(Activity.ADVANCE_UP,
@@ -390,7 +394,7 @@ STORYBOARD = Storyboard(
         activities=[
             Do(Activity.LIGHT_BACK,
                 w=1.0,
-                fade=3.0),
+                fade=2.0),
             Do(Activity.LIGHT_FRONT,
                 fade=0),
             Do(Activity.ADVANCE_UP,
@@ -425,7 +429,7 @@ STORYBOARD = Storyboard(
                 fade=0),
             Do(Activity.LIGHT_FRONT,
                 w=1.0,
-                fade=3.0),
+                fade=2.0),
             Do(Activity.ADVANCE_UP,
                 speed=3),    # TODO Vert15
         ]),

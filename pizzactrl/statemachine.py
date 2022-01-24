@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 from pizzactrl import fs_names
 from .storyboard import Language, Storyboard
-from .hal_serial import SerialCommunicationError, CommunicationError, PizzaHAL, wait_for_input, play_sound, turn_off
+from .hal_serial import SerialCommunicationError, CommunicationError, PizzaHAL, wait_for_input, play_sound, turn_off, reset
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,6 @@ class Statemachine:
                  hal: PizzaHAL,
                  story: Storyboard,
                  default_lang=Language.NOT_SET,
-                 move: bool = False,
                  loop: bool = True,
                  test: bool = False):
         self.hal = hal
@@ -41,7 +40,7 @@ class Statemachine:
         self.lang = None
 
         self.story = story
-        self.story.MOVE = move
+        self.story.MOVE = True
 
         self.test = test
         self.loop = loop
@@ -71,8 +70,7 @@ class Statemachine:
                 State.IDLE_END: self._idle_end
              }
             
-        while (self.state is not State.ERROR) and \
-                (self.state is not State.SHUTDOWN):
+        while (self.state is not State.ERROR) and (self.state is not State.SHUTDOWN):
             logger.debug(f'Run(state={self.state})')
             try:
                 choice[self.state]()
@@ -185,22 +183,24 @@ class Statemachine:
         turn_off(self.hal)
         self.story.skip_flag = False
         self.story.rewind()
-
-        if self.loop:
-            self.state = State.IDLE_START
-        else:
-            self._next_state()
-
+        self._next_state()
+        
     def _idle_end(self):
         """
-        Initialize shutdown
+        Initialize shutdown or go back to POST if `self.loop=True`
         """
-        self._next_state()
+        reset(self.hal)
+        self.hal.helo1 = False
+
+        if self.loop:
+            self.state = State.POST
+        else:
+            self._next_state()
 
     def _shutdown(self):
         """
         Clean up, end execution
         """
-        self.hal.pin_helo1.off()
         del self.hal
         del self.story
+        

@@ -58,6 +58,7 @@ class SerialCommands(Enum):
     RECORD = b'C'
 
     REWIND = b'R'
+    RESET = b'X'
 
     DEBUG_SCROLL = b'S'
     DEBUG_SENSORS = b'Z'
@@ -105,6 +106,24 @@ class PizzaHAL:
         Returns True when the lid is open
         """
         return self.lid_switch.is_pressed
+
+    @property
+    def helo1(self) -> bool:
+        """
+        Returns the status of the HELO1 pin
+        """
+        return bool(self.helo1.value)
+
+    @helo1.setter
+    def helo1(self, value: bool):
+        self.helo1.value = 1 if value else 0
+
+    @property
+    def helo2(self) -> bool:
+        """
+        Returns the value of the HELO2 pin (read only)
+        """
+        return bool(self.helo2.value)
 
     def init_connection(self):
         """
@@ -213,6 +232,9 @@ class PizzaHAL:
         return resp
 
     def flush_serial(self):
+        """
+        Clear the serial connection from unhandled responses.
+        """
         self.serialcon.read_all()
 
 
@@ -238,6 +260,13 @@ def rewind(hal: PizzaHAL, **kwargs):
 
     """
     hal.send_cmd(SerialCommands.REWIND, ignore_lid=True)
+
+
+def reset(hal: PizzaHAL, **kwargs):
+    """
+    Prepare microcontroller for reset.
+    """
+    hal.send_cmd(SerialCommands.RESET, ignore_lid=True)
 
 
 def turn_off(hal: PizzaHAL, **kwargs):
@@ -303,15 +332,15 @@ def wait_for_input(hal: PizzaHAL,
     
     resp = resp[1]
     if resp == 1:
-        blue_cb(**kwargs)
+        blue_cb()
     elif resp == 2:
-        red_cb(**kwargs)
+        red_cb()
     elif resp == 4:
-        yellow_cb(**kwargs)
+        yellow_cb()
     elif resp == 8:
-        green_cb(**kwargs)
+        green_cb()
     elif timeout_cb is not None:
-        timeout_cb(**kwargs)
+        timeout_cb()
 
 
 def set_light(hal: PizzaHAL,

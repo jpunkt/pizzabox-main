@@ -25,10 +25,11 @@ class Option(Enum):
     """
     Options can be chosen by the user in WAIT_FOR_INPUT
     """
-    CONTINUE = {'skip_flag': False}     # Continue with chapter. Set `skip_flag=True` to skip all chapters marked with `skip_flag`
-    REPEAT = {'rewind': True}           # Repeat chapter from beginning. `rewind=True`: reset scrolls to starting position  
-    GOTO = {'chapter': 0}               # Jump to chapter number
-    QUIT = {'quit': True}               # End playback.
+    CONTINUE =  {'skip_flag': None}     # Continue with chapter. Set `skip_flag=True` to skip all chapters marked with `skip_flag`
+    REPEAT =    {'rewind': True}        # Repeat chapter from beginning. `rewind=True`: reset scrolls to starting position  
+    GOTO =      {'chapter': 0,
+                 'skip_flag': None}     # Jump to chapter number
+    QUIT = {}                           # End playback. Will cause restart if `statemachine.loop=True`
 
 
 class Select:
@@ -65,10 +66,10 @@ class Activity(Enum):
     RECORD_VIDEO =   {'duration': 60.0, 
                       'filename': ''}
     TAKE_PHOTO =     {'filename': ''}
-    ADVANCE_UP =     {'steps': 46,
+    ADVANCE_UP =     {'steps': 48,
                       'scroll': Scrolls.VERTICAL,
                       'speed': 3}
-    ADVANCE_LEFT =   {'steps': 96,
+    ADVANCE_LEFT =   {'steps': 92,
                       'scroll': Scrolls.HORIZONTAL,
                       'speed': 3}
     LIGHT_FRONT =    {'r': 0,
@@ -211,7 +212,7 @@ class Storyboard:
 
         self.skip_flag = False     # Set `True` to skip chapters marked with skip_flag
 
-        self.MOVE = False          # self.move is reset to this value
+        self.MOVE = True           # self.move is reset to this value
         self._move = self.MOVE
 
         self._lang = Language.NOT_SET
@@ -255,39 +256,40 @@ class Storyboard:
         Return a callback for the appropriate option and parameters.
         Callbacks set the properties of `Statemachine` to determine it's behaviour.
         """
-        # rewind = selection.values.get('rewind', Option.REPEAT.value['rewind'])
-        # next_chapter = selection.values.get('chapter', Option.GOTO.value['chapter'])
-        # shutdown = selection.values.get('shutdown', Option.QUIT.value['shutdown'])
+        _rewind = selection.values.get('rewind', None)
+        _next_chapter = selection.values.get('chapter', None)
         _skip_flag = selection.values.get('skip_flag', None)
-        if _skip_flag is not None:
-            self.skip_flag = _skip_flag
         
-        def _continue(**kwargs):
+        def _continue():
             """
             Continue in the Storyboard. Prepare advancing to the next chapter.
             """
             logger.debug('User selected continue')
             if len(self.story) > (self._index + 1):
                 self.next_chapter = self._index + 1
+                if _skip_flag is not None:
+                    self.skip_flag = _skip_flag
             else:
                 self.next_chapter = None
         
-        def _repeat(rewind: bool=None, **kwargs):
+        def _repeat():
             """
             Repeat the current chapter. Do not rewind if the selection says so.
             """
             logger.debug('User selected repeat')
             self.next_chapter = self._index
-            self.move = rewind
+            self.move = _rewind
         
-        def _goto(chapter: int=None, **kwargs):
+        def _goto():
             """
             Jump to a specified chapter.
             """
-            logger.debug(f'User selected goto {chapter}')
-            self.next_chapter = chapter
+            logger.debug(f'User selected goto {_next_chapter}')
+            self.next_chapter = _next_chapter
+            if _skip_flag is not None:
+                self.skip_flag = _skip_flag
 
-        def _quit(**kwargs):
+        def _quit():
             logger.debug('User selected quit')
             self.next_chapter = None
 
@@ -346,6 +348,8 @@ class Storyboard:
 
         def _move(hal, do_now=True, **kwargs):
             logger.debug(f'Storyboard._move({kwargs})')
+            if not self.move:
+                return
             set_movement(hal, **kwargs)
             if do_now:
                 do_it(hal)
@@ -421,12 +425,12 @@ class Storyboard:
                     steps = ch.rewind()
                     h_steps += steps['h_steps']
                     v_steps += steps['v_steps']
-
             elif diff > 0:
                 """
                 Skip all chapters up to target
                 """
                 for ch in self.story[self._index:self._next_chapter]:
+                    logger.debug(f'Queueing chapter {ch} for skipping')
                     steps = ch.skip()
                     h_steps += steps['h_steps']
                     v_steps += steps['v_steps']
@@ -438,6 +442,7 @@ class Storyboard:
                 h_steps = steps['h_steps']
                 v_steps = steps['v_steps']
 
+            logger.debug(f'storyboard.move={self.move} and h_steps={h_steps}, v_steps={v_steps}.')
             if self.move and ((h_steps != 0) or (v_steps != 0)):
                 set_movement(self.hal, scroll=Scrolls.HORIZONTAL, steps=h_steps, speed=4)
                 set_movement(self.hal, scroll=Scrolls.VERTICAL, steps=v_steps, speed=4)

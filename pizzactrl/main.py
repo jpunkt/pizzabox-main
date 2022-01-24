@@ -1,3 +1,4 @@
+from email.policy import default
 import sys
 
 import click
@@ -11,18 +12,17 @@ logger = logging.getLogger('pizzactrl.main')
 
 
 @click.command()
-@click.option('--move', is_flag=True)
 @click.option('--test', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
 @click.option('--loop', is_flag=True, default=False)
-def main(move: bool=False, test: bool=False, debug: bool=False, loop: bool=False):
+def main(test: bool=False, debug: bool=False, loop: bool=False):
     if debug or test:
         logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     else:
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
     hal = PizzaHAL()
-    sm = Statemachine(hal, STORYBOARD, move=move, loop=loop, test=test)
+    sm = Statemachine(hal, STORYBOARD, loop=loop, test=test)
     
     sm.test = test
 

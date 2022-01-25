@@ -112,11 +112,11 @@ class PizzaHAL:
         """
         Returns the status of the HELO1 pin
         """
-        return bool(self.helo1.value)
+        return bool(self.pin_helo1.value)
 
     @helo1.setter
     def helo1(self, value: bool):
-        self.helo1.value = 1 if value else 0
+        self.pin_helo1.value = 1 if value else 0
 
     @property
     def helo2(self) -> bool:

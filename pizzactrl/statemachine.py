@@ -1,5 +1,7 @@
+import imp
 import logging
 import os.path
+import subprocess
 
 from enum import Enum, auto
 
@@ -67,10 +69,11 @@ class Statemachine:
                 State.PLAY: self._play,
                 State.POST_PROCESS: self._post_process,
                 State.REWIND: self._rewind,
-                State.IDLE_END: self._idle_end
+                State.IDLE_END: self._idle_end,
+                State.SHUTDOWN: self._shutdown
              }
             
-        while (self.state is not State.ERROR) and (self.state is not State.SHUTDOWN):
+        while (self.state is not State.SHUTDOWN) and (self.state is not State.ERROR):
             logger.debug(f'Run(state={self.state})')
             try:
                 choice[self.state]()
@@ -169,10 +172,16 @@ class Statemachine:
         """
         Post-processing
         """
-        # TODO postprocessing - add sound
-        # logger.debug('Converting video...')
-        # cmdstring = f'MP4Box -add {fs_names.REC_DRAW_CITY} {fs_names.REC_MERGED_VIDEO}'
-        # call([cmdstring], shell=True)
+        logger.debug('Converting video...')
+        
+        for fname in self.story.videos:
+            fnew = fname.split('.')[0] + '.mov'
+            logger.debug(f'Converting {fname} to {fnew}')
+            cmd = ['MP4Box', '-add', fname, fnew]
+            subprocess.run(cmd)
+            cmddel = ['rm', fname]
+            subprocess.run(cmddel)
+
         self.hal.flush_serial()
         self._next_state()
     
@@ -190,12 +199,15 @@ class Statemachine:
         Initialize shutdown or go back to POST if `self.loop=True`
         """
         reset(self.hal)
+        logger.debug('Turning off HELO1...')
         self.hal.helo1 = False
 
+        logger.debug(f'statemachine.loop={self.loop}')
         if self.loop:
             self.state = State.POST
         else:
-            self._next_state()
+            logger.debug('Setting state to shutdown')
+            self.state = State.SHUTDOWN
 
     def _shutdown(self):
         """
@@ -203,4 +215,5 @@ class Statemachine:
         """
         del self.hal
         del self.story
+        self.state = None
         

@@ -66,10 +66,10 @@ class Activity(Enum):
     RECORD_VIDEO =   {'duration': 60.0, 
                       'filename': ''}
     TAKE_PHOTO =     {'filename': ''}
-    ADVANCE_UP =     {'steps': 48,
+    ADVANCE_UP =     {'steps': 47,
                       'scroll': Scrolls.VERTICAL,
                       'speed': 3}
-    ADVANCE_LEFT =   {'steps': 92,
+    ADVANCE_LEFT =   {'steps': 96,
                       'scroll': Scrolls.HORIZONTAL,
                       'speed': 3}
     LIGHT_FRONT =    {'r': 0,
@@ -202,7 +202,7 @@ def _get_sound(language: Language, **kwargs):
 
 
 class Storyboard:
-    def __init__(self, *story: List[Do]) -> None:
+    def __init__(self, *story: List[Chapter]) -> None:
         self.story = story
         self.hal = None
 
@@ -216,6 +216,8 @@ class Storyboard:
         self._move = self.MOVE
 
         self._lang = Language.NOT_SET
+
+        self.videos = []
 
         self.ACTIVITY_SELECTOR = None
 
@@ -360,6 +362,11 @@ class Storyboard:
             if do_now:
                 do_it(hal)
 
+        def _record_video(hal, filename=None, **kwargs):
+            logger.debug(f'Storyboard._record_video(filename={filename}, {kwargs})')
+            record_video(hal, filename=filename, **kwargs)
+            self.videos.append(str(filename))
+
         def _goto(hal, index:int, **kwargs):
             """
             Set the next chapter
@@ -373,7 +380,7 @@ class Storyboard:
             Activity.PARALLEL: _parallel,
             Activity.GOTO: _goto,
             Activity.RECORD_SOUND: record_sound,
-            Activity.RECORD_VIDEO: record_video,
+            Activity.RECORD_VIDEO: _record_video,
             Activity.TAKE_PHOTO: take_photo,
             Activity.LIGHT_FRONT: _light,
             Activity.LIGHT_BACK: _light,
@@ -399,7 +406,10 @@ class Storyboard:
             
             if not self._chapter_set:
                 self._chapter_set = True
-                self._next_chapter = self._index + 1
+                if self._index < (len(self.story) - 1):
+                    self._next_chapter = self._index + 1
+                else:
+                    self._next_chapter = None
 
         else:
             self._next_chapter = None

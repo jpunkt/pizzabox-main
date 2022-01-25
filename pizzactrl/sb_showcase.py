@@ -137,7 +137,7 @@ STORYBOARD = Storyboard(
             Do(Activity.LIGHT_FRONT,
                 fade=1.0),
             Do(Activity.ADVANCE_UP,
-                steps=41,
+                steps=38,
                 speed=2),
             Do(Activity.ADVANCE_LEFT,
             steps=182)

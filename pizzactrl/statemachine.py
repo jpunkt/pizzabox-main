@@ -4,6 +4,7 @@ import os.path
 import subprocess
 
 from enum import Enum, auto
+from unittest import skip
 
 from pizzactrl import fs_names
 from .storyboard import Language, Storyboard
@@ -34,10 +35,12 @@ class Statemachine:
                  hal: PizzaHAL,
                  story: Storyboard,
                  default_lang=Language.NOT_SET,
+                 lang_select: bool = True,
                  loop: bool = True,
                  test: bool = False):
         self.hal = hal
 
+        self.lang_select = lang_select
         self.LANG = default_lang
         self.lang = None
 
@@ -132,23 +135,26 @@ class Statemachine:
         """
         Select language
         """
-        def _select_de():
-            self.lang = Language.DE
-        
-        def _select_en():
-            self.lang = Language.EN
+        if self.lang_select:
+            def _select_de():
+                self.lang = Language.DE
+            
+            def _select_en():
+                self.lang = Language.EN
 
-        def _select_default():
+            def _select_default():
+                self.lang = self.LANG
+
+            wait_for_input(self.hal,
+                        red_cb=_select_de,
+                        green_cb=_select_en,
+                        sound=fs_names.SND_SELECT_LANG,
+                        timeout_cb=_select_default)
+        else:
+            """
+            Skip language selection
+            """
             self.lang = self.LANG
-
-        #sound = self.hal.soundcache.get(fs_names.SND_SELECT_LANG)
-        #logger.debug(f'got sound {sound} from soundcache.')
-
-        wait_for_input(self.hal,
-                       red_cb=_select_de,
-                       green_cb=_select_en,
-                       sound=fs_names.SND_SELECT_LANG,
-                       timeout_cb=_select_default)
 
         self.story.language = self.lang
 

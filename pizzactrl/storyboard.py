@@ -66,12 +66,12 @@ class Activity(Enum):
     RECORD_VIDEO =   {'duration': 60.0, 
                       'filename': ''}
     TAKE_PHOTO =     {'filename': ''}
-    ADVANCE_UP =     {'steps': 47,
+    ADVANCE_UP =     {'steps': 43,
                       'scroll': Scrolls.VERTICAL,
                       'speed': 3}
-    ADVANCE_LEFT =   {'steps': 96,
+    ADVANCE_LEFT =   {'steps': 92,
                       'scroll': Scrolls.HORIZONTAL,
-                      'speed': 3}
+                      'speed': 2}
     LIGHT_FRONT =    {'r': 0,
                       'g': 0,
                       'b': 0,

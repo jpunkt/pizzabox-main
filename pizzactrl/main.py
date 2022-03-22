@@ -5,7 +5,7 @@ import click
 import logging
 
 from pizzactrl.statemachine import Statemachine, State
-from pizzactrl.sb_showcase import STORYBOARD
+from pizzactrl.sb_linz import STORYBOARD
 from pizzactrl.hal_serial import PizzaHAL
 
 logger = logging.getLogger('pizzactrl.main')
@@ -15,14 +15,15 @@ logger = logging.getLogger('pizzactrl.main')
 @click.option('--test', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
 @click.option('--loop', is_flag=True, default=False)
-def main(test: bool=False, debug: bool=False, loop: bool=False):
+@click.option('--no-lang', is_flag=True, default=True)
+def main(test: bool=False, debug: bool=False, loop: bool=False, no_lang: bool=True):
     if debug or test:
         logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     else:
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
     hal = PizzaHAL()
-    sm = Statemachine(hal, STORYBOARD, loop=loop, test=test)
+    sm = Statemachine(hal, STORYBOARD, loop=loop, test=test, lang_select=no_lang)
     
     sm.test = test
 

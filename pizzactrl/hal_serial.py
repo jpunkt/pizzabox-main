@@ -123,7 +123,7 @@ class PizzaHAL:
         """
         Returns the value of the HELO2 pin (read only)
         """
-        return bool(self.helo2.value)
+        return bool(self.pin_helo2.value)
 
     def init_connection(self):
         """

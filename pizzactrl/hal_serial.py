@@ -7,7 +7,7 @@ from typing import Any, List, Iterable
 from scipy.io.wavfile import write as writewav
 
 import sounddevice as sd
-import soundfile as sf
+# import soundfile as sf
 
 import pygame.mixer as mx
 
@@ -22,12 +22,20 @@ logger = logging.getLogger(__name__)
 
 
 # Constants
-VIDEO_RES = (1920, 1080)  # Video Resolution
-PHOTO_RES = (2592, 1944)  # Photo Resolution
-AUDIO_REC_SR = 44100      # Audio Recording Samplerate
+VIDEO_RES = (1920, 1080)      # Video Resolution
+PHOTO_RES = (2592, 1944)      # Photo Resolution
 
-SERIAL_DEV = '/dev/serial0' # Serial port to use
-SERIAL_BAUDRATE = 115200    # Serial connection baud rate
+# Keystone correction for ffmpeg post-production.
+# See https://ffmpeg.org/ffmpeg-filters.html#perspective for more information
+KEYSTONE_COORDS = ((370,42),  # x0, y0
+                   (1581,0),  # x1, y1
+                   (485,993), # x2, y2
+                   (1414,700))# x3, y3
+        
+AUDIO_REC_SR = 44100          # Audio Recording Samplerate
+
+SERIAL_DEV = '/dev/serial0'   # Serial port to use
+SERIAL_BAUDRATE = 115200      # Serial connection baud rate
 SERIAL_CONN_TIMEOUT = 0.2     # Serial connection read timeout
 HELO_TIMEOUT = 20
 
@@ -411,7 +419,9 @@ def record_sound(hal: PizzaHAL, filename: Any,
     """
     myrecording = sd.rec(int(duration * AUDIO_REC_SR),
                          samplerate=AUDIO_REC_SR,
-                         channels=2)
+                         channels=2,
+                         latency=0.2,   # reduce risk of buffer underruns (?)
+                         )
     
     resp = hal.send_cmd(SerialCommands.RECORD, int(duration*1000).to_bytes(4, 'little', signed=False))
 

@@ -64,7 +64,8 @@ class Activity(Enum):
                       'filename': '', 
                       'cache': False}
     RECORD_VIDEO =   {'duration': 60.0, 
-                      'filename': ''}
+                      'filename': '',
+                      'sound': None}
     TAKE_PHOTO =     {'filename': ''}
     ADVANCE_UP =     {'steps': 43,
                       'scroll': Scrolls.VERTICAL,
@@ -217,7 +218,7 @@ class Storyboard:
 
         self._lang = Language.NOT_SET
 
-        self.videos = []
+        self.videofiles = []
 
         self.ACTIVITY_SELECTOR = None
 
@@ -362,10 +363,10 @@ class Storyboard:
             if do_now:
                 do_it(hal)
 
-        def _record_video(hal, filename=None, **kwargs):
-            logger.debug(f'Storyboard._record_video(filename={filename}, {kwargs})')
-            record_video(hal, filename=filename, **kwargs)
-            self.videos.append(str(filename))
+        def _record_video(hal, filename=None, sound=None, **kwargs):
+            logger.debug(f'Storyboard._record_video(filename={filename}, sound={sound}, {kwargs})')
+            record_video(hal, filename=filename, sound=sound, **kwargs)
+            self.videofiles.append(str(filename))
 
         def _goto(hal, index:int, **kwargs):
             """

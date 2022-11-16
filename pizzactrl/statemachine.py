@@ -1,6 +1,7 @@
 import imp
 import logging
 import os.path
+from pathlib import Path
 import subprocess
 
 from enum import Enum, auto
@@ -8,7 +9,9 @@ from unittest import skip
 
 from pizzactrl import fs_names
 from .storyboard import Language, Storyboard
-from .hal_serial import SerialCommunicationError, CommunicationError, PizzaHAL, wait_for_input, play_sound, turn_off, reset
+from .hal_serial import KEYSTONE_COORDS, SerialCommunicationError, \
+                        CommunicationError, PizzaHAL, \
+                        wait_for_input, play_sound, turn_off, reset
 
 logger = logging.getLogger(__name__)
 
@@ -180,13 +183,27 @@ class Statemachine:
         """
         logger.debug('Converting video...')
         
-        for fname in self.story.videos:
-            fnew = fname.split('.')[0] + '.mov'
-            logger.debug(f'Converting {fname} to {fnew}')
-            cmd = ['MP4Box', '-add', fname, fnew]
+        for fname in self.story.videofiles:
+            if not Path(fname).exists():
+                logger.debug(f'Video file {fname} does not exist.')
+                continue
+
+            fnew = fname.split('.')[0] + '.mp4'
+            logger.debug(f'Converting {fname} to {fnew} ...')
+            # cmd = ['MP4Box', '-add', fname, fnew]
+            # ffmpeg -hide_banner -i <input.h264> -lavfi "rotate=PI[rotated];[rotated]perspective=x0=370:y0=42:x1=1581:y1=0:x2=485:y2=993:x3=1414:y3=700:interpolation=cubic" <output.mp4>
+            filter_string = f'''rotate=PI[rotated];[rotated]perspective='
+                                x0={KEYSTONE_COORDS[0][0]}:y0={KEYSTONE_COORDS[0][1]}:'
+                                x1={KEYSTONE_COORDS[1][0]}:y1={KEYSTONE_COORDS[1][1]}:'
+                                x2={KEYSTONE_COORDS[2][0]}:y2={KEYSTONE_COORDS[2][1]}:'
+                                x3={KEYSTONE_COORDS[3][0]}:y3={KEYSTONE_COORDS[3][1]}:'
+                                interpolation=cubic'''
+            cmd = ['ffmpeg', 
+                   '-hide_banner', '-y',
+                   '-i', fname, 
+                   '-lavfi', filter_string,
+                   fnew]
             subprocess.run(cmd)
-            cmddel = ['rm', fname]
-            subprocess.run(cmddel)
 
         self.hal.flush_serial()
         self._next_state()

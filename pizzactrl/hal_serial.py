@@ -429,7 +429,7 @@ def record_sound(hal: PizzaHAL, filename: Any,
         hal.soundcache[str(filename)] = mx.Sound(str(filename))
 
 
-def record_video(hal: PizzaHAL, filename: Any, duration: float, **kwargs):
+def record_video(hal: PizzaHAL, filename: Any, duration: float, sound: Any=None, **kwargs):
     """
     Record video using the camera
 
@@ -440,11 +440,17 @@ def record_video(hal: PizzaHAL, filename: Any, duration: float, **kwargs):
     hal.camera.resolution = VIDEO_RES
     hal.camera.start_recording(str(filename))
     
+    if sound is not None:
+        hal.play_sound(str(sound))
+
     t = 0
     while hal.lid_open and (t < duration):
         hal.camera.wait_recording(0.1)
         t += 0.1
     
+    if mx.get_busy():
+        hal.stop_sound()
+
     hal.camera.stop_recording()
 
 

@@ -1,4 +1,3 @@
-from fileinput import filename
 from pizzactrl import fs_names
 from pizzactrl.storyboard import *
 

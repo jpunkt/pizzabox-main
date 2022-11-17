@@ -1,6 +1,5 @@
 import logging
 from enum import Enum, auto
-from threading import active_count
 from typing import List, Any
 
 from pizzactrl.hal_serial import Lights, Scrolls, \

@@ -4,6 +4,5 @@ picamera
 click
 sounddevice
 soundfile
-scipy
 pyserial
 pydub

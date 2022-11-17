@@ -1,4 +1,3 @@
-import imp
 import sys
 import logging
 

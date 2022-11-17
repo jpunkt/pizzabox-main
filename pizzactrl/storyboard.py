@@ -19,6 +19,7 @@ class Language(Enum):
     NOT_SET = 'sound'
     DE = 'DE'
     EN = 'EN'
+    TR = 'TR'
 
 
 class Option(Enum):
@@ -56,10 +57,12 @@ class Activity(Enum):
                       Language.NOT_SET.value: None,
                       Language.DE.value: None,
                       Language.EN.value: None, 
+                      Language.TR.value: None,
                       'timeout': 0}
     PLAY_SOUND =     {Language.NOT_SET.value: None, 
                       Language.DE.value: None,
-                      Language.EN.value: None}
+                      Language.EN.value: None,
+                      Language.TR.value: None}
     RECORD_SOUND =   {'duration': 10.0, 
                       'filename': '', 
                       'cache': False}

@@ -1,11 +1,11 @@
-import imp
 import logging
 import os.path
 from pathlib import Path
 import subprocess
 
+from typing import Union
+
 from enum import Enum, auto
-from unittest import skip
 
 from pizzactrl import fs_names
 from .storyboard import Language, Storyboard
@@ -34,11 +34,15 @@ class State(Enum):
 
 
 class Statemachine:
+    """
+    Use `lang_select = 3` for 3 languages.
+    `lang_select = True | 1 | 2` will enable language selection for 2 languages
+    """
     def __init__(self,
                  hal: PizzaHAL,
                  story: Storyboard,
                  default_lang=Language.NOT_SET,
-                 lang_select: bool = True,
+                 lang_select: Union[bool,int] = True,
                  loop: bool = True,
                  test: bool = False):
         self.hal = hal
@@ -145,14 +149,25 @@ class Statemachine:
             def _select_en():
                 self.lang = Language.EN
 
+            def _select_tr():
+                self.lang = Language.TR
+
             def _select_default():
                 self.lang = self.LANG
 
-            wait_for_input(self.hal,
-                        red_cb=_select_de,
-                        green_cb=_select_en,
-                        sound=fs_names.SND_SELECT_LANG,
-                        timeout_cb=_select_default)
+            if self.lang_select > 2:
+                wait_for_input(self.hal,
+                            blue_cb=_select_de,
+                            red_cb=_select_en,
+                            green_cb=_select_tr,
+                            sound=fs_names.SND_SELECT_LANG,
+                            timeout_cb=_select_default)
+            else:
+                wait_for_input(self.hal,
+                            red_cb=_select_de,
+                            green_cb=_select_en,
+                            sound=fs_names.SND_SELECT_LANG,
+                            timeout_cb=_select_default)
         else:
             """
             Skip language selection

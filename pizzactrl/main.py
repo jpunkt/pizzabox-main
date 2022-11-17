@@ -24,8 +24,6 @@ def main(test: bool=False, debug: bool=False, loop: bool=False, no_lang: bool=Tr
     hal = PizzaHAL()
     sm = Statemachine(hal, STORYBOARD, loop=loop, test=test, lang_select=no_lang)
     
-    sm.test = test
-
     exitcode = 0
     try:
         sm.run()

@@ -1,0 +1,11 @@
+[Unit]
+Description=Pizzabox Autostart Service
+After=network.target
+[Service]
+Type=simple
+ExecStart=/home/pi/.local/bin/pizzabox
+Restart=no
+User=pi
+Group=pi
+[Install]
+WantedBy=multi-user.target

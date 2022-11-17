@@ -222,7 +222,7 @@ class PizzaHAL:
         
         self.serialcon.write(SerialCommands.EOT.value)   
         resp = b''
-        while resp is b'':
+        while resp == b'':
             # If serial communication timeout occurs, response is empty.
             # Read again to allow for longer waiting times
             if not self.pin_helo2.value:

@@ -69,12 +69,12 @@ class Activity(Enum):
                       'filename': '',
                       'sound': None}
     TAKE_PHOTO =     {'filename': ''}
-    ADVANCE_UP =     {'steps': 43,
+    ADVANCE_UP =     {'steps': 1,
                       'scroll': Scrolls.VERTICAL,
-                      'speed': 3}
-    ADVANCE_LEFT =   {'steps': 92,
-                      'scroll': Scrolls.HORIZONTAL,
                       'speed': 2}
+    ADVANCE_LEFT =   {'steps': 1,
+                      'scroll': Scrolls.HORIZONTAL,
+                      'speed': 3}
     LIGHT_FRONT =    {'r': 0,
                       'g': 0,
                       'b': 0,

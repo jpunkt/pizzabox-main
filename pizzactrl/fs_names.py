@@ -82,17 +82,6 @@ class StoryFile(FileHandle):
     def __init__(self, name: str):
         FileHandle.__init__(self, name, FileType.STORY)
 
-
-# REC_NAME = RecFile('name.wav')
-# REC_MY_IBK = RecFile('my_ibk.wav')
-# REC_PORTRAIT = RecFile('portrait.jpg')
-# REC_CITY_NAME = RecFile('city_name.wav')
-# REC_CITY_DESC = RecFile('city_description.wav')
-# REC_CITY_SOUND = RecFile('city_sound.wav')
-# REC_DRAW_CITY = RecFile('city_video.h264')
-# REC_CITY_PHOTO = RecFile('city_drawing.jpg')
-# REC_MERGED_VIDEO = RecFile('video.mp4')
-
 SFX_ERROR = SfxFile('error')
 SFX_ERROR_DE = SfxFile('error-de')
 SFX_ERROR_EN = SfxFile('error-en')

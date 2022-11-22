@@ -1,6 +1,6 @@
 import logging
 
-from time import sleep
+from time import sleep, time
 from enum import Enum
 
 from typing import Any, List, Iterable
@@ -449,6 +449,8 @@ def record_video(hal: PizzaHAL, filename: Any, duration: float, sound: Any=None,
     """
     hal.camera.resolution = VIDEO_RES
     hal.camera.start_recording(str(filename))
+    start_time = time()
+    logger.debug(f'Started recording at {start_time}')
     
     if sound is not None:
         hal.play_sound(str(sound))
@@ -462,6 +464,8 @@ def record_video(hal: PizzaHAL, filename: Any, duration: float, sound: Any=None,
         hal.stop_sound()
 
     hal.camera.stop_recording()
+    end_time = time()
+    logger.debug(f'Ended recording at {end_time}; took {end_time - start_time}s')
 
 
 def take_photo(hal: PizzaHAL, filename: Any, **kwargs):

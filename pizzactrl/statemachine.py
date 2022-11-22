@@ -43,8 +43,9 @@ class Statemachine:
                  story: Storyboard,
                  default_lang=Language.NOT_SET,
                  lang_select: Union[bool,int] = True,
-                 loop: bool = True,
-                 test: bool = False):
+                 loop: bool=True,
+                 test: bool=False,
+                 move: bool=True):
         self.hal = hal
 
         self.lang_select = lang_select
@@ -52,7 +53,7 @@ class Statemachine:
         self.lang = None
 
         self.story = story
-        self.story.MOVE = True
+        self.story.MOVE = move
 
         self.test = test
         self.loop = loop
@@ -216,7 +217,9 @@ class Statemachine:
             cmd = ['ffmpeg', 
                    '-hide_banner', '-y',
                    '-i', fname, 
+                   '-codec:v', 'h264_v4l2m2m',   # Uses hardware support, makes conversion faster
                    '-lavfi', filter_string,
+                   '-r', '30',
                    fnew]
             subprocess.run(cmd)
 

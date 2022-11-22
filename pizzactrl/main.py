@@ -1,3 +1,4 @@
+from email.policy import default
 import sys
 
 import click
@@ -14,15 +15,15 @@ logger = logging.getLogger('pizzactrl.main')
 @click.option('--test', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
 @click.option('--loop', is_flag=True, default=False)
-@click.option('--no-lang', is_flag=True, default=True)
-def main(test: bool=False, debug: bool=False, loop: bool=False, no_lang: bool=True):
+@click.option('--langs', default=3, help='Number of languages. Range 0..3')
+def main(test: bool=False, debug: bool=False, loop: bool=False, lang: int=3):
     if debug or test:
         logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     else:
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
     hal = PizzaHAL()
-    sm = Statemachine(hal, STORYBOARD, loop=loop, test=test, lang_select=no_lang)
+    sm = Statemachine(hal, STORYBOARD, loop=loop, test=test, lang_select=lang)
     
     exitcode = 0
     try:

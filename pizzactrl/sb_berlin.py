@@ -1,4 +1,3 @@
-from functools import cache
 from pizzactrl import fs_names
 from pizzactrl.storyboard import *
 
@@ -171,7 +170,7 @@ STORYBOARD = Storyboard(
         Do(Activity.TAKE_PHOTO,
             filename=PROFILE_PIC),
         Do(Activity.PLAY_SOUND,
-            sound=fs_names.fs_names.SFX_SHUTTER)
+            sound=fs_names.SFX_SHUTTER)
     ),
     Chapter(    # X6
         Do(Activity.PLAY_SOUND,

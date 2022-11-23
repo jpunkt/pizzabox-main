@@ -4,8 +4,9 @@ from pathlib import Path
 import subprocess
 
 from typing import Union
-
 from enum import Enum, auto
+
+from time import time
 
 from pizzactrl import fs_names
 from .storyboard import Language, Storyboard
@@ -204,7 +205,8 @@ class Statemachine:
                 logger.debug(f'Video file {fname} does not exist.')
                 continue
 
-            fnew = fname.split('.')[0] + '.mp4'
+            start_time = time()
+            fnew = fname.split('.')[0] + '.mov'
             logger.debug(f'Converting {fname} to {fnew} ...')
             # cmd = ['MP4Box', '-add', fname, fnew]
             # ffmpeg -hide_banner -i <input.h264> -lavfi "rotate=PI[rotated];[rotated]perspective=x0=370:y0=42:x1=1581:y1=0:x2=485:y2=993:x3=1414:y3=700:interpolation=cubic" <output.mp4>
@@ -216,12 +218,14 @@ class Statemachine:
                                 interpolation=cubic'''
             cmd = ['ffmpeg', 
                    '-hide_banner', '-y',
+                   '-framerate', '30',           # Original .h264 video has 29.97fps (according to vlc), but 30fps works better
                    '-i', fname, 
                    '-codec:v', 'h264_v4l2m2m',   # Uses hardware support, makes conversion faster
+                   '-b:v', '4M',                 # Reduces artefacts 
                    '-lavfi', filter_string,
-                   '-r', '30',
                    fnew]
             subprocess.run(cmd)
+            logger.debug(f'Video conversion took {time() - start_time}s')
 
         self.hal.flush_serial()
         self._next_state()

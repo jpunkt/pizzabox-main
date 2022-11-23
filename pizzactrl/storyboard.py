@@ -74,7 +74,7 @@ class Activity(Enum):
                       'speed': 2}
     ADVANCE_LEFT =   {'steps': 1,
                       'scroll': Scrolls.HORIZONTAL,
-                      'speed': 3}
+                      'speed': 2}
     LIGHT_FRONT =    {'r': 0,
                       'g': 0,
                       'b': 0,

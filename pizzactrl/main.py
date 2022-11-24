@@ -15,7 +15,7 @@ logger = logging.getLogger('pizzactrl.main')
 @click.option('--test', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
 @click.option('--loop', is_flag=True, default=False)
-@click.option('--langs', default=3, help='Number of languages. Range 0..3')
+@click.option('--lang', default=3, help='Number of languages. Range 0..3')
 def main(test: bool=False, debug: bool=False, loop: bool=False, lang: int=3):
     if debug or test:
         logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)

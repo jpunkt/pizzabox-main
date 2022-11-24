@@ -71,10 +71,10 @@ class Activity(Enum):
     TAKE_PHOTO =     {'filename': ''}
     ADVANCE_UP =     {'steps': 1,
                       'scroll': Scrolls.VERTICAL,
-                      'speed': 2}
+                      'speed': 3}
     ADVANCE_LEFT =   {'steps': 1,
                       'scroll': Scrolls.HORIZONTAL,
-                      'speed': 2}
+                      'speed': 4}
     LIGHT_FRONT =    {'r': 0,
                       'g': 0,
                       'b': 0,

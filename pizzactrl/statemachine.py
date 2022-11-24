@@ -27,8 +27,8 @@ class State(Enum):
     IDLE_START = auto()
     LANGUAGE_SELECT = auto()
     PLAY = auto()
-    POST_PROCESS = auto()
     REWIND = auto()
+    POST_PROCESS = auto()
     IDLE_END = auto()
     SHUTDOWN = auto()
     ERROR = -1

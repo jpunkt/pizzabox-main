@@ -12,11 +12,14 @@ REC_CITY_VIDEO = fs_names.RecFile('city.h264')
 
 STORYBOARD = Storyboard(
     Chapter(    # Start position
-        Do(Activity.PARALLEL,
-        activities=[
-            Do(Activity.ADVANCE_LEFT),  # VERT01
-            Do(Activity.ADVANCE_UP)     # HOR01
-        ])
+        Do(Activity.ADVANCE_LEFT,
+            steps=-1,
+            speed=4),  # HOR01
+        Do(Activity.ADVANCE_LEFT),  # HOR01
+        Do(Activity.ADVANCE_UP,
+            steps=-1,
+            speed=3),
+        Do(Activity.ADVANCE_UP)     # VERT01
     ),
     Chapter(    # X1 = 0
         Do(Activity.LIGHT_FRONT,

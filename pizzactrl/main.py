@@ -5,7 +5,7 @@ import click
 import logging
 
 from pizzactrl.statemachine import Statemachine, State
-from pizzactrl.sb_dummy import STORYBOARD
+from pizzactrl.sb_berlin import STORYBOARD
 from pizzactrl.hal_serial import PizzaHAL
 
 logger = logging.getLogger('pizzactrl.main')

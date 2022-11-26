@@ -7,6 +7,7 @@ import logging
 from pizzactrl.statemachine import Statemachine, State
 from pizzactrl.sb_berlin import STORYBOARD
 from pizzactrl.hal_serial import PizzaHAL
+from pizzactrl.storyboard import Language
 
 logger = logging.getLogger('pizzactrl.main')
 
@@ -23,7 +24,7 @@ def main(test: bool=False, debug: bool=False, loop: bool=False, lang: int=3):
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
     hal = PizzaHAL()
-    sm = Statemachine(hal, STORYBOARD, loop=loop, test=test, lang_select=lang)
+    sm = Statemachine(hal, STORYBOARD, loop=loop, test=test, lang_select=lang, default_lang=Language.DE)
     
     exitcode = 0
     try:

@@ -4,6 +4,7 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/home/pi/.local/bin/pizzabox
+ExecStopPost=sudo systemctl poweroff
 Restart=no
 User=pi
 Group=pi

@@ -58,7 +58,7 @@ STORYBOARD = Storyboard(
             sound=fs_names.SFX_REC_AUDIO),
         Do(Activity.RECORD_VIDEO,
             filename=fs_names.RecFile('my_video2.h264'),
-            duration=45),
+            duration=4),
         Do(Activity.PLAY_SOUND,
             sound=fs_names.SFX_STOP_REC)
     )

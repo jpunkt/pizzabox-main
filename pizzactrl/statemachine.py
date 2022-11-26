@@ -102,6 +102,8 @@ class Statemachine:
                 play_sound(self.hal, fs_names.SFX_ERROR_DE)
             elif self.lang is Language.EN:
                 play_sound(self.hal, fs_names.SFX_ERROR_EN)
+            elif self.lang is Language.TR:
+                play_sound(self.hal, fs_names.SFX_ERROR_TR)
             else:
                 play_sound(self.hal, fs_names.SFX_ERROR)
 

@@ -85,6 +85,7 @@ class StoryFile(FileHandle):
 SFX_ERROR = SfxFile('error')
 SFX_ERROR_DE = SfxFile('error-de')
 SFX_ERROR_EN = SfxFile('error-en')
+SFX_ERROR_TR = SfxFile('error-tr')
 SFX_POST_OK = SfxFile('done')
 SFX_SHUTTER = SfxFile('done')
 SFX_REC_AUDIO = SfxFile('countdown')
